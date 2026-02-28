@@ -56,7 +56,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
 
         if (isProduction) {
           // 生产环境：跳转到 GitHub OAuth
-          window.location.href = '/auth/login'
+          window.location.href = '/api/auth/login'
         } else {
           // 本地开发：使用简单登录
           const response = await fetch(`${API_BASE}/auth/login`, { method: 'POST' })

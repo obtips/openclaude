@@ -1,0 +1,43 @@
+---
+// GitHub OAuth 登录入口
+
+export async function GET({ request, env }: any) {
+  // 从 env 获取配置（Cloudflare adapter 提供）
+  const githubClientId = env?.GITHUB_CLIENT_ID || ''
+
+  if (!githubClientId) {
+    return new Response('GITHUB_CLIENT_ID not configured. Please check Cloudflare Pages environment variables.', {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain' }
+    })
+  }
+
+  const redirectUri = new URL(request.url).origin + '/api/auth/callback'
+  const params = new URLSearchParams({
+    client_id: githubClientId,
+    redirect_uri: redirectUri,
+    scope: 'read:user user:email',
+    state: crypto.randomUUID(),
+  })
+
+  const githubUrl = `https://github.com/login/oauth/authorize?${params}`
+
+  return Response.redirect(githubUrl, 302)
+}
+
+export async function POST() {
+  // 本地开发简单登录
+  const sessionId = 'local-session-' + Date.now()
+
+  return new Response(JSON.stringify({
+    user: { name: '本地用户', login: 'local' },
+    sessionId: sessionId,
+  }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json',
+      'Set-Cookie': `session_id=${sessionId}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${60 * 24 * 60 * 60}`,
+    },
+  })
+}
+---
