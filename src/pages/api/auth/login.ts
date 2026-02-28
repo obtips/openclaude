@@ -3,12 +3,14 @@ import type { APIRoute } from 'astro'
 
 export const prerender = false
 
-export const GET: APIRoute = async () => {
-  // 暂时硬编码 GitHub Client ID 用于测试
-  // TODO: 需要从环境变量读取
-  const githubClientId = 'Iv23fd7f00000000' // 替换为实际的 Client ID
+export const GET: APIRoute = async ({ request }) => {
+  const githubClientId = 'Ov23liyYAZ0eXDPO9eKd'
 
-  const origin = 'https://openclaude.pages.dev'
+  // 从请求头获取 origin
+  const origin = request.headers.get('host')
+    ? `https://${request.headers.get('host')}`
+    : 'https://openclaude.pages.dev'
+
   const redirectUri = `${origin}/api/auth/callback`
 
   const params = new URLSearchParams({

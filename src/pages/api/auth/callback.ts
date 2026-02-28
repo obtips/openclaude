@@ -26,10 +26,9 @@ export const GET: APIRoute = async ({ url }) => {
   }
 
   try {
-    // 暂时硬编码 GitHub 凭据用于测试
-    // TODO: 需要从环境变量读取
-    const clientId = 'Iv23fd7f00000000'
-    const clientSecret = 'your_client_secret_here'
+    // GitHub OAuth 凭据
+    const clientId = 'Ov23liyYAZ0eXDPO9eKd'
+    const clientSecret = '61561f648dcd7b16438aa04f4ce2f189712b004f'
 
     // 交换 access token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
@@ -70,7 +69,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     const userData = await userResponse.json()
 
-    // 创建 session
+    // 创建 session（注意：需要配置 KV Namespace 才能持久化）
     const sessionId = crypto.randomUUID()
     const sessionData = {
       user: {
@@ -79,11 +78,13 @@ export const GET: APIRoute = async ({ url }) => {
         avatar: userData.avatar_url,
       },
       accessToken: tokenData.access_token,
-      expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000, // 60 天
+      expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
     }
 
-    // 注意：当前没有 KV 存储，session 无法持久化
-    // 需要配置 Cloudflare KV
+    // TODO: 存储到 KV Namespace (需要在 Cloudflare Pages 配置)
+    // await env.SESSIONS.put(sessionId, JSON.stringify(sessionData), {
+    //   expirationTtl: 60 * 24 * 60 * 60,
+    // })
 
     // 重定向到管理后台，设置 session cookie
     const headers = new Headers({
@@ -99,7 +100,6 @@ export const GET: APIRoute = async ({ url }) => {
         <body style="font-family: sans-serif; text-align: center; padding: 50px;">
           <h1>登录失败</h1>
           <p>错误: ${err?.message || '未知错误'}</p>
-          <p style="color: #666; font-size: 14px;">请确保已配置 GitHub OAuth App 和 Cloudflare KV Namespace</p>
           <a href="/admin">返回</a>
         </body>
       </html>
