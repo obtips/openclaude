@@ -1,7 +1,9 @@
----
 // GitHub OAuth 回调处理
+import type { APIRoute } from 'astro'
 
-export async function GET({ request, url, env }: any) {
+export const prerender = false
+
+export const GET: APIRoute = async ({ url }) => {
   const code = url.searchParams.get('code')
   const error = url.searchParams.get('error')
 
@@ -24,6 +26,11 @@ export async function GET({ request, url, env }: any) {
   }
 
   try {
+    // 暂时硬编码 GitHub 凭据用于测试
+    // TODO: 需要从环境变量读取
+    const clientId = 'Iv23fd7f00000000'
+    const clientSecret = 'your_client_secret_here'
+
     // 交换 access token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
@@ -32,20 +39,21 @@ export async function GET({ request, url, env }: any) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        client_id: env?.GITHUB_CLIENT_ID || '',
-        client_secret: env?.GITHUB_CLIENT_SECRET || '',
+        client_id: clientId,
+        client_secret: clientSecret,
         code: code,
       }),
     })
 
     if (!tokenResponse.ok) {
-      throw new Error('Token exchange failed')
+      const errorText = await tokenResponse.text()
+      return new Response(`Token exchange failed: ${errorText}`, { status: 500 })
     }
 
     const tokenData = await tokenResponse.json()
 
     if (tokenData.error) {
-      throw new Error(tokenData.error_description || tokenData.error)
+      return new Response(`OAuth error: ${tokenData.error_description || tokenData.error}`, { status: 500 })
     }
 
     // 获取用户信息
@@ -57,7 +65,7 @@ export async function GET({ request, url, env }: any) {
     })
 
     if (!userResponse.ok) {
-      throw new Error('Failed to get user info')
+      return new Response('Failed to get user info', { status: 500 })
     }
 
     const userData = await userResponse.json()
@@ -74,17 +82,12 @@ export async function GET({ request, url, env }: any) {
       expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000, // 60 天
     }
 
-    // 存储到 KV (如果配置了)
-    if (env?.SESSIONS) {
-      await env.SESSIONS.put(sessionId, JSON.stringify(sessionData), {
-        expirationTtl: 60 * 24 * 60 * 60, // 60 天
-      })
-    }
+    // 注意：当前没有 KV 存储，session 无法持久化
+    // 需要配置 Cloudflare KV
 
     // 重定向到管理后台，设置 session cookie
-    const redirectUrl = new URL('/admin', new URL(request.url).origin)
     const headers = new Headers({
-      'Location': `${redirectUrl.pathname}?session=${sessionId}`,
+      'Location': `/admin?session=${sessionId}`,
       'Set-Cookie': `session_id=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 24 * 60 * 60}`,
     })
 
@@ -96,10 +99,10 @@ export async function GET({ request, url, env }: any) {
         <body style="font-family: sans-serif; text-align: center; padding: 50px;">
           <h1>登录失败</h1>
           <p>错误: ${err?.message || '未知错误'}</p>
+          <p style="color: #666; font-size: 14px;">请确保已配置 GitHub OAuth App 和 Cloudflare KV Namespace</p>
           <a href="/admin">返回</a>
         </body>
       </html>
     `, { status: 500, headers: { 'Content-Type': 'text/html' } })
   }
 }
----
