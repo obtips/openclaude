@@ -1,28 +1,20 @@
 ---
-// GitHub OAuth 登录入口
+// GitHub OAuth 登录入口 - 调试版本
 
 export async function GET({ request, env }: any) {
-  // 从 env 获取配置（Cloudflare adapter 提供）
-  const githubClientId = env?.GITHUB_CLIENT_ID || ''
-
-  if (!githubClientId) {
-    return new Response('GITHUB_CLIENT_ID not configured. Please check Cloudflare Pages environment variables.', {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain' }
-    })
+  // 调试：返回环境信息
+  const debugInfo = {
+    message: 'Auth login endpoint is working!',
+    hasEnv: !!env,
+    hasClientId: !!env?.GITHUB_CLIENT_ID,
+    clientIdPrefix: env?.GITHUB_CLIENT_ID?.substring(0, 10) || 'none',
+    origin: new URL(request.url).origin,
+    timestamp: new Date().toISOString()
   }
 
-  const redirectUri = new URL(request.url).origin + '/api/auth/callback'
-  const params = new URLSearchParams({
-    client_id: githubClientId,
-    redirect_uri: redirectUri,
-    scope: 'read:user user:email',
-    state: crypto.randomUUID(),
+  return new Response(JSON.stringify(debugInfo, null, 2), {
+    headers: { 'Content-Type': 'application/json' }
   })
-
-  const githubUrl = `https://github.com/login/oauth/authorize?${params}`
-
-  return Response.redirect(githubUrl, 302)
 }
 
 export async function POST() {
