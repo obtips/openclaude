@@ -18,8 +18,8 @@ export const GET: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify(posts), {
       headers: { 'Content-Type': 'application/json' },
     })
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error?.message || 'Internal error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -42,8 +42,8 @@ export const POST: APIRoute = async ({ request }) => {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
     })
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error?.message || 'Internal error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -160,7 +160,7 @@ function parseMarkdown(content: string) {
     const colonIndex = line.indexOf(':')
     if (colonIndex > 0) {
       const key = line.slice(0, colonIndex).trim()
-      let value = line.slice(colonIndex + 1).trim()
+      let value: any = line.slice(colonIndex + 1).trim()
 
       if (value.startsWith("'") && value.endsWith("'")) {
         value = value.slice(1, -1)

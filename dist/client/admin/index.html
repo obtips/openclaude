@@ -1,2 +1,532 @@
-<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>管理后台 - OpenClaude Admin</title><style>*{box-sizing:border-box}body{margin:0;font-family:Figtree,system-ui,sans-serif}
-</style></head> <body class="bg-gray-50"> <div id="app"></div>  <div id="admin-root"></div>  </body></html> <script type="module" src="/_astro/index.astro_astro_type_script_index_0_lang.BPsZghkq.js"></script>
+<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>管理后台 - OpenClaude Admin</title><style>*{box-sizing:border-box}body{margin:0;font-family:Figtree,system-ui,sans-serif}#admin-root[data-astro-cid-u2h3djql]{min-height:100vh}
+</style></head> <body class="bg-gray-50"> <div id="app"></div>  <div id="admin-root" data-astro-cid-u2h3djql></div>  </body></html>  <script>
+  (async () => {
+    const React = await import('https://esm.sh/react@18')
+    const { createRoot } = await import('https://esm.sh/react-dom@18/client')
+
+    const API_BASE = '/api'
+
+    const initialState = {
+      view: 'login',
+      posts: [],
+      tutorials: [],
+      contentType: 'blog', // 'blog' or 'tutorial'
+      error: '',
+      user: null,
+    }
+
+    function AdminApp() {
+      const [state, setState] = React.useState(initialState)
+
+      // 检查登录状态
+      React.useEffect(() => {
+        checkLogin()
+      }, [])
+
+      const checkLogin = async () => {
+        try {
+          const response = await fetch(`${API_BASE}/posts`)
+          if (response.ok) {
+            const posts = await response.json()
+            setState({ view: 'list', posts, tutorials: [], contentType: 'blog', error: '' })
+          } else if (response.status === 401) {
+            setState({ ...initialState, view: 'login' })
+          }
+        } catch (e) {
+          console.error('Auth check failed:', e)
+        }
+      }
+
+      const handleLogin = async () => {
+        const response = await fetch(`${API_BASE}/auth/login`, { method: 'POST' })
+        if (response.ok) {
+          await checkLogin()
+        }
+      }
+
+      const handleLogout = async () => {
+        await fetch(`${API_BASE}/auth/logout`, { method: 'POST' })
+        setState({ ...initialState, view: 'login' })
+      }
+
+      const handleNew = () => {
+        setState({ ...state, view: 'new', currentPost: undefined })
+      }
+
+      const handleEdit = async (slug) => {
+        try {
+          const response = await fetch(`${API_BASE}/posts/${slug}`)
+          if (response.ok) {
+            const post = await response.json()
+            setState({ ...state, view: 'edit', currentPost: post })
+          }
+        } catch (e) {
+          setState({ ...state, error: '加载文章失败' })
+        }
+      }
+
+      const handleSave = async (post) => {
+        const isNew = state.view === 'new'
+        const slug = isNew ? post.slug : state.currentPost?.slug
+
+        try {
+          const url = `${API_BASE}/posts${isNew ? '' : '/' + slug}`
+          const response = await fetch(url, {
+            method: isNew ? 'POST' : 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...post, sha: state.currentPost?.sha }),
+          })
+
+          if (response.ok) {
+            await checkLogin()
+            return true
+          } else {
+            setState({ ...state, error: '保存失败' })
+            return false
+          }
+        } catch (e) {
+          setState({ ...state, error: '保存失败' })
+          return false
+        }
+      }
+
+      const handleDelete = async (slug, sha) => {
+        try {
+          const response = await fetch(`${API_BASE}/posts/${slug}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sha }),
+          })
+
+          if (response.ok) {
+            setState({
+              ...state,
+              posts: state.posts.filter(p => p.slug !== slug),
+            })
+          } else {
+            setState({ ...state, error: '删除失败' })
+          }
+        } catch (e) {
+          setState({ ...state, error: '删除失败' })
+        }
+      }
+
+      const handleCancel = () => {
+        setState({ ...state, view: 'list' })
+      }
+
+      const switchContentType = (type) => {
+        setState({ ...state, contentType: type })
+      }
+
+      // 登录组件
+      const Login = () => {
+        return React.createElement('div', {
+          style: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#F5F1E8' }
+        },
+          React.createElement('div', { style: { width: '100%', maxWidth: '400px' } },
+            React.createElement('div', { style: { textAlign: 'center', marginBottom: '40px' } },
+              React.createElement('h1', { style: { fontSize: '26px', fontWeight: '600', color: '#1A1A1A', marginBottom: '6px' } }, 'OpenClaude'),
+              React.createElement('p', { style: { fontSize: '14px', color: '#6B7280' } }, '管理后台登录')
+            ),
+
+            React.createElement('div', { style: { background: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' } },
+              React.createElement('div', { style: { marginBottom: '24px', textAlign: 'center', padding: '20px', background: '#F9FAFB', borderRadius: '8px' } },
+                React.createElement('p', { style: { fontSize: '14px', color: '#374151', marginBottom: '12px' } },
+                  '本地开发登录'
+                ),
+                React.createElement('button', {
+                  onClick: handleLogin,
+                  style: {
+                    width: '100%',
+                    padding: '12px',
+                    background: '#D4A574',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '15px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }
+                }, '登录后台')
+              )
+            )
+          )
+        )
+      }
+
+      // 文章列表组件
+      const PostList = ({ posts, onNew, onEdit, onDelete }) => {
+        const [search, setSearch] = React.useState('')
+        const [categoryFilter, setCategoryFilter] = React.useState('全部')
+        const [deleteConfirm, setDeleteConfirm] = React.useState(null)
+
+        const categories = ['全部', ...Array.from(new Set(posts.map(p => p.category)))]
+
+        const filteredPosts = posts.filter(post => {
+          const matchesType = !post.contentType || post.contentType === state.contentType
+          const matchesSearch =
+            post.title.toLowerCase().includes(search.toLowerCase()) ||
+            post.description.toLowerCase().includes(search.toLowerCase())
+          const matchesCategory = categoryFilter === '全部' || post.category === categoryFilter
+          return matchesType && matchesSearch && matchesCategory
+        })
+
+        const getStatusStyle = (post) => {
+          if (post.draft) return { background: '#F3F4F6', color: '#6B7280', text: '草稿' }
+          if (post.featured) return { background: '#FEF3C7', color: '#D97706', text: '精选' }
+          return { background: '#D1FAE5', color: '#059669', text: '已发布' }
+        }
+
+        return React.createElement('div', {
+          style: { maxWidth: '1200px', margin: '0 auto', padding: '32px 20px' }
+        },
+          // 顶部导航栏
+          React.createElement('div', { style: { background: 'white', borderRadius: '12px', padding: '16px 24px', marginBottom: '24px', border: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' } },
+            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '24px' } },
+              React.createElement('a', {
+                href: '/',
+                style: { textDecoration: 'none', color: '#6B7280', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }
+              }, '\u2190 返回首页'),
+              React.createElement('div', { style: { display: 'flex', gap: '8px' } },
+                React.createElement('button', {
+                  onClick: () => switchContentType('blog'),
+                  style: {
+                    padding: '8px 16px',
+                    background: state.contentType === 'blog' ? '#D4A574' : 'white',
+                    color: state.contentType === 'blog' ? 'white' : '#374151',
+                    border: state.contentType === 'blog' ? 'none' : '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }
+                }, '博客'),
+                React.createElement('button', {
+                  onClick: () => switchContentType('tutorial'),
+                  style: {
+                    padding: '8px 16px',
+                    background: state.contentType === 'tutorial' ? '#D4A574' : 'white',
+                    color: state.contentType === 'tutorial' ? 'white' : '#374151',
+                    border: state.contentType === 'tutorial' ? 'none' : '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }
+                }, '教程')
+              )
+            ),
+            React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '12px' } },
+              React.createElement('span', { style: { fontSize: '14px', color: '#6B7280' } }, `${posts.length} 篇`),
+              React.createElement('button', {
+                onClick: handleLogout,
+                style: { padding: '8px 16px', background: 'white', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }
+              }, '退出'),
+              React.createElement('button', {
+                onClick: onNew,
+                style: { padding: '10px 20px', background: '#D4A574', color: 'white', border: 'none', borderRadius: '8px', fontSize: '14px', fontWeight: '500', cursor: 'pointer' }
+              }, '+ 新建')
+            )
+          ),
+
+          // 标题
+          React.createElement('div', { style: { marginBottom: '24px' } },
+            React.createElement('h1', { style: { fontSize: '28px', fontWeight: '600', color: '#1A1A1A', marginBottom: '4px' } },
+              state.contentType === 'blog' ? '博客文章' : '教程文档'
+            ),
+            React.createElement('p', { style: { fontSize: '14px', color: '#6B7280' } }, '管理您的网站内容')
+          ),
+
+          // 搜索和筛选
+          React.createElement('div', { style: { display: 'flex', gap: '12px', marginBottom: '24px' } },
+            React.createElement('input', {
+              type: 'text',
+              placeholder: '搜索文章...',
+              value: search,
+              onChange: (e) => setSearch(e.target.value),
+              style: { flex: 1, padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '14px' }
+            }),
+            React.createElement('select', {
+              value: categoryFilter,
+              onChange: (e) => setCategoryFilter(e.target.value),
+              style: { padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '14px', background: 'white', minWidth: '120px' }
+            }, categories.map(cat =>
+              React.createElement('option', { key: cat, value: cat }, cat)
+            ))
+          ),
+
+          // 文章列表
+          filteredPosts.length === 0
+            ? React.createElement('div', { style: { textAlign: 'center', padding: '60px 20px', color: '#9CA3AF' } },
+                React.createElement('p', { style: { fontSize: '16px' } }, posts.length === 0 ? '暂无文章' : '没有匹配的文章')
+              )
+            : React.createElement('div', { style: { background: 'white', borderRadius: '12px', border: '1px solid #E5E7EB', overflow: 'hidden' } },
+              React.createElement('table', { style: { width: '100%', borderCollapse: 'collapse' } },
+                React.createElement('thead', null,
+                  React.createElement('tr', { style: { borderBottom: '1px solid #E5E7EB', background: '#F9FAFB' } },
+                    React.createElement('th', { style: { padding: '14px 20px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' } }, '标题'),
+                    React.createElement('th', { style: { padding: '14px 20px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' } }, '分类'),
+                    React.createElement('th', { style: { padding: '14px 20px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' } }, '状态'),
+                    React.createElement('th', { style: { padding: '14px 20px', textAlign: 'left', fontSize: '12px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' } }, '日期'),
+                    React.createElement('th', { style: { padding: '14px 20px', textAlign: 'right', fontSize: '12px', fontWeight: '600', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.5px' } }, '操作')
+                  )
+                ),
+                React.createElement('tbody', null,
+                  filteredPosts.map((post, index) => {
+                    const status = getStatusStyle(post)
+                    return React.createElement('tr', {
+                      key: post.slug,
+                      style: { borderBottom: index < filteredPosts.length - 1 ? '1px solid #E5E7EB' : null }
+                    },
+                      React.createElement('td', { style: { padding: '16px 20px' } },
+                        React.createElement('div', { style: { fontWeight: '500', color: '#1A1A1A', marginBottom: '4px' } }, post.title),
+                        React.createElement('div', { style: { fontSize: '13px', color: '#6B7280', marginBottom: '4px', maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, post.description),
+                        React.createElement('div', { style: { fontSize: '12px', color: '#9CA3AF', fontFamily: 'monospace' } }, `/${post.slug}`)
+                      ),
+                      React.createElement('td', { style: { padding: '16px 20px' } },
+                        React.createElement('span', { style: { padding: '4px 10px', fontSize: '12px', fontWeight: '500', borderRadius: '12px', background: '#DBEAFE', color: '#1D4ED8' } }, post.category)
+                      ),
+                      React.createElement('td', { style: { padding: '16px 20px' } },
+                        React.createElement('span', { style: { padding: '4px 10px', fontSize: '12px', fontWeight: '500', borderRadius: '12px', background: status.background, color: status.color } }, status.text)
+                      ),
+                      React.createElement('td', { style: { padding: '16px 20px', fontSize: '14px', color: '#6B7280' } },
+                        new Date(post.date).toLocaleDateString('zh-CN')
+                      ),
+                      React.createElement('td', { style: { padding: '16px 20px', textAlign: 'right' } },
+                        React.createElement('a', {
+                          href: state.contentType === 'blog' ? `/blog/${post.slug}` : `/tutorial/${post.slug}`,
+                          target: '_blank',
+                          style: { padding: '6px 14px', background: 'transparent', border: 'none', color: '#6B7280', fontSize: '14px', cursor: 'pointer', borderRadius: '6px', marginRight: '4px', textDecoration: 'none' }
+                        }, '查看'),
+                        React.createElement('button', {
+                          onClick: () => onEdit(post.slug),
+                          style: { padding: '6px 14px', background: 'transparent', border: 'none', color: '#D4A574', fontSize: '14px', fontWeight: '500', cursor: 'pointer', borderRadius: '6px' }
+                        }, '编辑'),
+                        React.createElement('button', {
+                          onClick: () => post.sha && onDelete(post.slug, post.sha),
+                          style: { padding: '6px 14px', background: 'transparent', border: 'none', color: deleteConfirm === post.slug ? '#DC2626' : '#9CA3AF', fontSize: '14px', cursor: 'pointer', borderRadius: '6px', marginLeft: '8px' }
+                        }, deleteConfirm === post.slug ? '确认?' : '删除')
+                      )
+                    )
+                  })
+                )
+              )
+            )
+        )
+      }
+
+      // 简化的编辑器组件
+      const PostEditor = ({ initialPost, onSave, onCancel, isNew }) => {
+        const [title, setTitle] = React.useState(initialPost?.title || '')
+        const [description, setDescription] = React.useState(initialPost?.description || '')
+        const [content, setContent] = React.useState(initialPost?.content || '')
+        const [author, setAuthor] = React.useState(initialPost?.author || 'OpenClaude Team')
+        const [tags, setTags] = React.useState(initialPost?.tags?.join(', ') || '')
+        const [category, setCategory] = React.useState(initialPost?.category || '技术')
+        const [draft, setDraft] = React.useState(initialPost?.draft || false)
+        const [featured, setFeatured] = React.useState(initialPost?.featured || false)
+        const [image, setImage] = React.useState(initialPost?.image || '')
+        const [slug, setSlug] = React.useState(initialPost?.slug || '')
+        const [saving, setSaving] = React.useState(false)
+        const [error, setError] = React.useState('')
+
+        const categories = ['技术', '公告', '教程', '产品', '社区', 'AI', '开发']
+
+        const handleSave = async () => {
+          if (!title.trim() || !description.trim()) {
+            setError('标题和描述不能为空')
+            return
+          }
+          setSaving(true)
+          setError('')
+
+          const post = {
+            title,
+            description,
+            date: initialPost?.date || new Date().toISOString(),
+            content,
+            author,
+            tags: tags.split(',').map(t => t.trim()).filter(t => t),
+            category,
+            draft,
+            featured,
+            image: image || undefined,
+          }
+
+          if ((isNew || slug !== initialPost?.slug) && slug) {
+            post.slug = slug
+          }
+
+          const success = await onSave(post, initialPost?.sha)
+          if (!success) setError('保存失败')
+          setSaving(false)
+        }
+
+        return React.createElement('div', { style: { maxWidth: '800px', margin: '0 auto', padding: '32px 20px' } },
+          // 头部
+          React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' } },
+            React.createElement('div', null,
+              React.createElement('a', {
+                href: '/admin',
+                style: { textDecoration: 'none', color: '#6B7280', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }
+              }, '\u2190 返回列表'),
+              React.createElement('h1', { style: { fontSize: '24px', fontWeight: '600', color: '#1A1A1A' } }, isNew ? '新建文章' : '编辑文章'),
+              !isNew && React.createElement('p', { style: { fontSize: '14px', color: '#9CA3AF', marginTop: '4px' } }, `/${initialPost?.slug}`)
+            ),
+            React.createElement('div', { style: { display: 'flex', gap: '8px' } },
+              React.createElement('button', {
+                onClick: onCancel,
+                style: { padding: '8px 16px', background: 'white', border: '1px solid #E5E7EB', borderRadius: '6px', fontSize: '14px', cursor: 'pointer' }
+              }, '取消'),
+              React.createElement('button', {
+                onClick: handleSave,
+                disabled: saving,
+                style: { padding: '8px 20px', background: '#D4A574', color: 'white', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: '500', cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.6 : 1 }
+              }, saving ? '保存中...' : '保存')
+            )
+          ),
+
+          error && React.createElement('div', {
+            style: { marginBottom: '20px', padding: '12px 16px', background: '#FEF2F2', borderRadius: '8px', fontSize: '14px', color: '#DC2626', border: '1px solid #FECACA' }
+          }, error),
+
+          // 编辑表单
+          React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '16px' } },
+            // 基本信息
+            React.createElement('div', { style: { background: 'white', borderRadius: '12px', padding: '20px', border: '1px solid #E5E7EB' } },
+              React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' } },
+                React.createElement('div', null,
+                  React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, 'URL Slug'),
+                  React.createElement('input', {
+                    type: 'text',
+                    value: slug,
+                    onChange: (e) => setSlug(e.target.value),
+                    placeholder: 'your-post-slug',
+                    style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', boxSizing: 'border-box', fontFamily: 'monospace' }
+                  })
+                ),
+                React.createElement('div', null,
+                  React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '作者'),
+                  React.createElement('input', {
+                    type: 'text',
+                    value: author,
+                    onChange: (e) => setAuthor(e.target.value),
+                    style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }
+                  })
+                )
+              ),
+
+              React.createElement('div', null,
+                React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '标题 *'),
+                React.createElement('input', {
+                  type: 'text',
+                  value: title,
+                  onChange: (e) => setTitle(e.target.value),
+                  placeholder: '文章标题',
+                  required: true,
+                  style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '16px', fontWeight: '500', boxSizing: 'border-box' }
+                })
+              ),
+
+              React.createElement('div', null,
+                React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '描述 *'),
+                React.createElement('textarea', {
+                  value: description,
+                  onChange: (e) => setDescription(e.target.value),
+                  placeholder: '简短描述文章内容',
+                  rows: 2,
+                  required: true,
+                  style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', resize: 'vertical', minHeight: '60px' }
+                })
+              ),
+
+              React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' } },
+                React.createElement('div', null,
+                  React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '分类'),
+                  React.createElement('select', {
+                    value: category,
+                    onChange: (e) => setCategory(e.target.value),
+                    style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', background: 'white' }
+                  }, categories.map(cat =>
+                    React.createElement('option', { key: cat, value: cat }, cat)
+                  ))
+                ),
+                React.createElement('div', null,
+                  React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '标签'),
+                  React.createElement('input', {
+                    type: 'text',
+                    value: tags,
+                    onChange: (e) => setTags(e.target.value),
+                    placeholder: 'React, JavaScript',
+                    style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }
+                  })
+                )
+              ),
+
+              React.createElement('div', { style: { display: 'flex', gap: '24px', paddingTop: '8px' } },
+                React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#374151', cursor: 'pointer' } },
+                  React.createElement('input', {
+                    type: 'checkbox',
+                    checked: draft,
+                    onChange: (e) => setDraft(e.target.checked),
+                    style: { width: '16px', height: '16px' }
+                  }),
+                  '草稿'
+                ),
+                React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#374151', cursor: 'pointer' } },
+                  React.createElement('input', {
+                    type: 'checkbox',
+                    checked: featured,
+                    onChange: (e) => setFeatured(e.target.checked),
+                    style: { width: '16px', height: '16px' }
+                  }),
+                  '精选'
+                )
+              )
+            ),
+
+            // Markdown 内容
+            React.createElement('div', { style: { background: 'white', borderRadius: '12px', padding: '20px', border: '1px solid #E5E7EB' } },
+              React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '文章内容 (Markdown)'),
+              React.createElement('textarea', {
+                value: content,
+                onChange: (e) => setContent(e.target.value),
+                placeholder: '# 开始写作...\n\n支持 **Markdown** 语法',
+                rows: 18,
+                style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '13px', fontFamily: 'monospace', lineHeight: '1.6', minHeight: '400px', resize: 'vertical', boxSizing: 'border-box' }
+              })
+            )
+          )
+        )
+      }
+
+      // 渲染
+      if (state.view === 'login') {
+        return React.createElement(Login)
+      }
+
+      if (state.view === 'list') {
+        return React.createElement(PostList, {
+          posts: state.posts,
+          onNew: handleNew,
+          onEdit: handleEdit,
+          onDelete: handleDelete,
+        })
+      }
+
+      return React.createElement(PostEditor, {
+        initialPost: state.currentPost,
+        isNew: state.view === 'new',
+        onSave: handleSave,
+        onCancel: handleCancel,
+      })
+    }
+
+    const container = document.getElementById('admin-root')
+    if (container) {
+      const root = createRoot(container)
+      root.render(React.createElement(AdminApp))
+    }
+  })()
+</script>

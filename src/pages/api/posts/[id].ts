@@ -13,6 +13,12 @@ export const GET: APIRoute = async ({ params, request }) => {
   }
 
   const { id: slug } = params
+  if (!slug) {
+    return new Response(JSON.stringify({ error: 'Missing slug' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
   try {
     const post = await getPost(slug)
@@ -25,8 +31,8 @@ export const GET: APIRoute = async ({ params, request }) => {
     return new Response(JSON.stringify(post), {
       headers: { 'Content-Type': 'application/json' },
     })
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error?.message || 'Internal error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -43,6 +49,12 @@ export const PUT: APIRoute = async ({ params, request }) => {
   }
 
   const { id: slug } = params
+  if (!slug) {
+    return new Response(JSON.stringify({ error: 'Missing slug' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
   try {
     const body = await request.json()
@@ -50,8 +62,8 @@ export const PUT: APIRoute = async ({ params, request }) => {
     return new Response(JSON.stringify(result), {
       headers: { 'Content-Type': 'application/json' },
     })
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error?.message || 'Internal error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -68,14 +80,20 @@ export const DELETE: APIRoute = async ({ params, request }) => {
   }
 
   const { id: slug } = params
+  if (!slug) {
+    return new Response(JSON.stringify({ error: 'Missing slug' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
 
   try {
     await deletePost(slug)
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json' },
     })
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error?.message || 'Internal error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
@@ -172,7 +190,7 @@ function parseMarkdown(content: string) {
     const colonIndex = line.indexOf(':')
     if (colonIndex > 0) {
       const key = line.slice(0, colonIndex).trim()
-      let value = line.slice(colonIndex + 1).trim()
+      let value: any = line.slice(colonIndex + 1).trim()
 
       if (value.startsWith("'") && value.endsWith("'")) {
         value = value.slice(1, -1)

@@ -1,6 +1,6 @@
 import { verifySession } from '../../../lib/auth-cloudflare'
 
-export async function onRequest(context) {
+export async function onRequest(context: any) {
   const { request, env } = context
 
   // 处理预检请求
@@ -37,7 +37,7 @@ export async function onRequest(context) {
 
     // POST /functions/api/posts - 创建文章
     if (method === 'POST') {
-      const body = await request.json()
+      const body: any = await request.json()
       const post = await createPost(env, body)
       return new Response(JSON.stringify(post), {
         status: 201,
@@ -46,19 +46,19 @@ export async function onRequest(context) {
     }
 
     return new Response('Method not allowed', { status: 405 })
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error?.message || 'Internal error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
   }
 }
 
-async function getAllPosts(env) {
+async function getAllPosts(env: any) {
   const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = env
 
   const contentTypes = ['blog', 'tutorial']
-  const allPosts = []
+  const allPosts: any[] = []
 
   for (const type of contentTypes) {
     const response = await fetch(
@@ -95,15 +95,15 @@ async function getAllPosts(env) {
 
       allPosts.push({
         slug: file.name.replace('.md', ''),
-        title: frontmatter.title || file.name,
-        description: frontmatter.description || '',
-        date: frontmatter.date || new Date().toISOString(),
-        author: frontmatter.author || 'OpenClaude Team',
-        tags: frontmatter.tags || [],
-        category: frontmatter.category || '技术',
-        draft: frontmatter.draft || false,
-        featured: frontmatter.featured || false,
-        image: frontmatter.image,
+        title: (frontmatter as any).title || file.name,
+        description: (frontmatter as any).description || '',
+        date: (frontmatter as any).date || new Date().toISOString(),
+        author: (frontmatter as any).author || 'OpenClaude Team',
+        tags: (frontmatter as any).tags || [],
+        category: (frontmatter as any).category || '技术',
+        draft: (frontmatter as any).draft || false,
+        featured: (frontmatter as any).featured || false,
+        image: (frontmatter as any).image,
         content: markdown,
         sha: file.sha,
         contentType: type,
@@ -114,15 +114,16 @@ async function getAllPosts(env) {
   return allPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
-async function createPost(env, body) {
+async function createPost(env: any, body: any) {
   const { GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME } = env
-  const { title, description, content, author, tags, category, draft, featured, image, slug } = body
+  const { title, description, content, author, tags, category, draft, featured, image, slug, contentType } = body
 
   if (!title || !description || !content) {
     throw new Error('Missing required fields')
   }
 
   const finalSlug = slug || generateSlug(title)
+  const targetType = contentType || 'blog'
   const frontmatter = generateFrontmatter({
     title,
     description,
@@ -139,7 +140,7 @@ async function createPost(env, body) {
   const contentBase64 = btoa(unescape(encodeURIComponent(fullContent)))
 
   const response = await fetch(
-    `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/src/content/blog/${finalSlug}.md`,
+    `https://api.github.com/repos/${GITHUB_REPO_OWNER}/${GITHUB_REPO_NAME}/contents/src/content/${targetType}/${finalSlug}.md`,
     {
       method: 'PUT',
       headers: {
@@ -148,7 +149,7 @@ async function createPost(env, body) {
         'Content-Type': 'application/vnd.github.v3+json',
       },
       body: JSON.stringify({
-        message: `Create blog post: ${title}`,
+        message: `Create ${targetType} post: ${title}`,
         content: contentBase64,
       }),
     }
@@ -162,7 +163,7 @@ async function createPost(env, body) {
   return { success: true, slug: finalSlug }
 }
 
-function parseMarkdown(content) {
+function parseMarkdown(content: string) {
   const frontmatterRegex = /^---\n([\s\S]+?)\n---\n([\s\S]*)$/
   const match = content.match(frontmatterRegex)
 
@@ -171,13 +172,13 @@ function parseMarkdown(content) {
   }
 
   const frontmatterLines = match[1].split('\n')
-  const frontmatter = {}
+  const frontmatter: any = {}
 
   for (const line of frontmatterLines) {
     const colonIndex = line.indexOf(':')
     if (colonIndex > 0) {
       const key = line.slice(0, colonIndex).trim()
-      let value = line.slice(colonIndex + 1).trim()
+      let value: any = line.slice(colonIndex + 1).trim()
 
       if (value.startsWith("'") && value.endsWith("'")) {
         value = value.slice(1, -1)
@@ -188,7 +189,7 @@ function parseMarkdown(content) {
       } else if (value === 'false') {
         value = false
       } else if (value.startsWith('[') && value.endsWith(']')) {
-        value = value.slice(1, -1).split(',').map(v => v.trim().replace(/['"]/g, '')).filter(v => v)
+        value = value.slice(1, -1).split(',').map((v: string) => v.trim().replace(/['"]/g, '')).filter((v: string) => v)
       }
 
       frontmatter[key] = value
@@ -198,8 +199,8 @@ function parseMarkdown(content) {
   return { frontmatter, markdown: match[2] }
 }
 
-function generateFrontmatter(post) {
-  const tags = (post.tags || []).map(t => `'${t}'`).join(', ')
+function generateFrontmatter(post: any) {
+  const tags = (post.tags || []).map((t: string) => `'${t}'`).join(', ')
   return `---
 title: '${post.title}'
 description: '${post.description}'
@@ -215,7 +216,7 @@ ${post.image ? `image: '${post.image}'` : ''}
 `
 }
 
-function generateSlug(title) {
+function generateSlug(title: string) {
   return title
     .toLowerCase()
     .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '-')

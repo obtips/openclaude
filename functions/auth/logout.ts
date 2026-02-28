@@ -1,16 +1,4 @@
-export async function onRequest(context) {
-  const { request, env } = context
-
-  if (request.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      },
-    })
-  }
-
+export async function onRequest(_context: any) {
   // 登出，清除 cookie
   return new Response(JSON.stringify({ success: true }), {
     status: 200,

@@ -1,6 +1,6 @@
 import { verifySession } from '../../../lib/auth-cloudflare'
 
-export async function onRequest(context) {
+export async function onRequest(context: any) {
   const { request, env, params } = context
 
   if (request.method === 'OPTIONS') {
@@ -54,15 +54,15 @@ export async function onRequest(context) {
 
       return new Response(JSON.stringify({
         slug,
-        title: frontmatter.title || slug,
-        description: frontmatter.description || '',
-        date: frontmatter.date || new Date().toISOString(),
-        author: frontmatter.author || 'OpenClaude Team',
-        tags: frontmatter.tags || [],
-        category: frontmatter.category || '技术',
-        draft: frontmatter.draft || false,
-        featured: frontmatter.featured || false,
-        image: frontmatter.image,
+        title: (frontmatter as any).title || slug,
+        description: (frontmatter as any).description || '',
+        date: (frontmatter as any).date || new Date().toISOString(),
+        author: (frontmatter as any).author || 'OpenClaude Team',
+        tags: (frontmatter as any).tags || [],
+        category: (frontmatter as any).category || '技术',
+        draft: (frontmatter as any).draft || false,
+        featured: (frontmatter as any).featured || false,
+        image: (frontmatter as any).image,
         content: markdown,
       }), {
         headers: { 'Content-Type': 'application/json' },
@@ -71,7 +71,7 @@ export async function onRequest(context) {
 
     // PUT /functions/api/posts/[id] - 更新文章
     if (method === 'PUT') {
-      const body = await request.json()
+      const body: any = await request.json()
       const { title, description, content, author, tags, category, draft, featured, image, sha, newSlug } = body
 
       if (!sha) {
@@ -126,7 +126,7 @@ export async function onRequest(context) {
 
     // DELETE /functions/api/posts/[id] - 删除文章
     if (method === 'DELETE') {
-      const body = await request.json()
+      const body: any = await request.json()
       const { sha } = body
 
       if (!sha) {
@@ -163,15 +163,15 @@ export async function onRequest(context) {
     }
 
     return new Response('Method not allowed', { status: 405 })
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error?.message || 'Internal error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })
   }
 }
 
-function parseMarkdown(content) {
+function parseMarkdown(content: string) {
   const frontmatterRegex = /^---\n([\s\S]+?)\n---\n([\s\S]*)$/
   const match = content.match(frontmatterRegex)
 
@@ -180,13 +180,13 @@ function parseMarkdown(content) {
   }
 
   const frontmatterLines = match[1].split('\n')
-  const frontmatter = {}
+  const frontmatter: any = {}
 
   for (const line of frontmatterLines) {
     const colonIndex = line.indexOf(':')
     if (colonIndex > 0) {
       const key = line.slice(0, colonIndex).trim()
-      let value = line.slice(colonIndex + 1).trim()
+      let value: any = line.slice(colonIndex + 1).trim()
 
       if (value.startsWith("'") && value.endsWith("'")) {
         value = value.slice(1, -1)
@@ -197,7 +197,7 @@ function parseMarkdown(content) {
       } else if (value === 'false') {
         value = false
       } else if (value.startsWith('[') && value.endsWith(']')) {
-        value = value.slice(1, -1).split(',').map(v => v.trim().replace(/['"]/g, '')).filter(v => v)
+        value = value.slice(1, -1).split(',').map((v: string) => v.trim().replace(/['"]/g, '')).filter((v: string) => v)
       }
 
       frontmatter[key] = value
@@ -207,8 +207,8 @@ function parseMarkdown(content) {
   return { frontmatter, markdown: match[2] }
 }
 
-function generateFrontmatter(post) {
-  const tags = (post.tags || []).map(t => `'${t}'`).join(', ')
+function generateFrontmatter(post: any) {
+  const tags = (post.tags || []).map((t: string) => `'${t}'`).join(', ')
   return `---
 title: '${post.title}'
 description: '${post.description}'

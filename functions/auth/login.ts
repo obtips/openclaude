@@ -1,4 +1,4 @@
-export async function onRequest(context) {
+export async function onRequest(context: any) {
   const { request, env } = context
   const url = new URL(request.url)
 
@@ -79,7 +79,7 @@ export async function onRequest(context) {
         avatar: userData.avatar_url,
       },
       accessToken: tokenData.access_token,
-      expiresAt: Date.now() + tokenData.expires_in * 1000,
+      expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000, // 60 天
     }
 
     // 存储到 KV (如果配置了)
@@ -100,8 +100,8 @@ export async function onRequest(context) {
         'Set-Cookie': `session_id=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 24 * 60 * 60}`,
       },
     })
-  } catch (error) {
-    return new Response(JSON.stringify({ error: 'Internal server error' }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error?.message || 'Internal server error' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     })

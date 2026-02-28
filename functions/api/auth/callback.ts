@@ -1,12 +1,11 @@
 // GitHub OAuth 回调处理器
-export async function onRequest(context) {
+export async function onRequest(context: any) {
   const { request, env } = context
   const url = new URL(request.url)
 
   try {
-    // 从 URL 参数获取授权码和 state
+    // 从 URL 参数获取授权码
     const code = url.searchParams.get('code')
-    const state = url.searchParams.get('state')
     const error = url.searchParams.get('error')
 
     // 处理用户拒绝授权
@@ -88,19 +87,21 @@ export async function onRequest(context) {
 
     // 重定向到管理后台，设置 session cookie
     const redirectUrl = new URL('/admin', url.origin)
-    return Response.redirect(`${redirectUrl.origin}${redirectUrl.pathname}?session=${sessionId}`, 302, {
+    return new Response(null, {
+      status: 302,
       headers: {
+        'Location': `${redirectUrl.origin}${redirectUrl.pathname}?session=${sessionId}`,
         'Set-Cookie': `session_id=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 24 * 60 * 60}`,
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('OAuth callback error:', error)
     return new Response(`
       <html>
         <head><title>登录失败</title></head>
         <body style="font-family: sans-serif; text-align: center; padding: 50px;">
           <h1>登录失败</h1>
-          <p>错误: ${error.message}</p>
+          <p>错误: ${error?.message || '未知错误'}</p>
           <a href="/admin">返回</a>
         </body>
       </html>
