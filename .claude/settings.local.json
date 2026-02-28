@@ -1,0 +1,6 @@
+{
+  "enabledMcpjsonServers": [
+    "tavily"
+  ],
+  "enableAllProjectMcpServers": true
+}

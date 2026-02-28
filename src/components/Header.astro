@@ -1,0 +1,83 @@
+---
+interface Props {
+  lang?: string
+}
+
+const { lang = 'zh' } = Astro.props
+
+// 是否为开发环境
+const isDev = import.meta.env.DEV
+
+const nav = {
+  zh: {
+    home: '首页',
+    tutorial: '教程',
+    blog: '博客',
+    about: '关于',
+    admin: '管理后台',
+  },
+  en: {
+    home: 'Home',
+    tutorial: 'Tutorials',
+    blog: 'Blog',
+    about: 'About',
+    admin: 'Admin',
+  }
+}
+
+const t = nav[lang as keyof typeof nav]
+const currentPath = Astro.url.pathname
+const langPrefix = lang === 'en' ? '/en' : ''
+
+// 移除当前语言前缀以获取基础路径
+const basePath = currentPath.replace(/^\/en/, '')
+// 计算切换语言后的路径
+const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
+---
+
+<header class="sticky top-0 z-50 bg-claude-cream/80 backdrop-blur-md border-b border-claude-border">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between h-16">
+      <!-- Logo -->
+      <a href={lang === 'en' ? '/en' : '/'} class="flex items-center gap-2 hover:opacity-70 transition-opacity">
+        <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="8" fill="#D4A574"/>
+          <path d="M10 12C10 10.8954 10.8954 10 12 10H20C21.1046 10 22 10.8954 22 12V20C22 21.1046 21.1046 22 20 22H12C10.8954 22 10 21.1046 10 20V12Z" fill="white"/>
+          <path d="M14 15L16 17L18 15" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="font-semibold text-xl">OpenClaude</span>
+      </a>
+
+      <!-- 导航 -->
+      <nav class="hidden md:flex items-center gap-6">
+        <a href={lang === 'en' ? '/en' : '/'} class="text-claude-text-light hover:text-claude-text transition-colors">
+          {t.home}
+        </a>
+        <a href={`${langPrefix}/tutorial/`} class="text-claude-text-light hover:text-claude-text transition-colors">
+          {t.tutorial}
+        </a>
+        <a href={`${langPrefix}/blog/`} class="text-claude-text-light hover:text-claude-text transition-colors">
+          {t.blog}
+        </a>
+        <a href={`${langPrefix}/about`} class="text-claude-text-light hover:text-claude-text transition-colors">
+          {t.about}
+        </a>
+        {isDev && (
+          <a href="/admin/" class="text-claude-accent hover:text-claude-accent/80 transition-colors font-medium">
+            {t.admin}
+          </a>
+        )}
+      </nav>
+
+      <!-- 语言切换 -->
+      <a
+        href={switchPath}
+        class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-claude-border hover:bg-claude-warm transition-colors text-sm"
+        title={lang === 'zh' ? 'Switch to English' : '切换到中文'}
+      >
+        <span>🌐</span>
+        <span>{lang === 'zh' ? 'EN' : '中文'}</span>
+      </a>
+    </div>
+  </div>
+</header>

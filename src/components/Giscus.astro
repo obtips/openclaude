@@ -1,0 +1,87 @@
+---
+// Giscus 评论系统
+// 需要先在 GitHub 仓库启用 Discussions
+// 访问 https://giscus.app 获取配置
+
+const giscusConfig = {
+  repo: import.meta.env.GISCUS_REPO || '',
+  repoId: import.meta.env.GISCUS_REPO_ID || '',
+  category: import.meta.env.GISCUS_CATEGORY || 'Announcements',
+  categoryId: import.meta.env.GISCUS_CATEGORY_ID || '',
+  mapping: 'pathname',
+  strict: '0',
+  reactionsEnabled: '1',
+  emitMetadata: '0',
+  inputPosition: 'bottom',
+  lang: 'zh-CN',
+  theme: 'light',
+}
+
+// 检查是否启用评论系统
+const isEnabled = import.meta.env.GISCUS_ENABLED !== 'false' &&
+                  giscusConfig.repo &&
+                  giscusConfig.repoId &&
+                  giscusConfig.categoryId
+---
+
+{isEnabled ? (
+  <div id="giscus-container">
+    <script is:inline src="https://giscus.app/client.js"
+      data-repo={giscusConfig.repo}
+      data-repo-id={giscusConfig.repoId}
+      data-category={giscusConfig.category}
+      data-category-id={giscusConfig.categoryId}
+      data-mapping={giscusConfig.mapping}
+      data-strict={giscusConfig.strict}
+      data-reactions-enabled={giscusConfig.reactionsEnabled}
+      data-emit-metadata={giscusConfig.emitMetadata}
+      data-input-position={giscusConfig.inputPosition}
+      data-lang={giscusConfig.lang}
+      data-theme={giscusConfig.theme}
+      crossorigin="anonymous"
+      async>
+    </script>
+  </div>
+) : (
+  <div class="text-center py-8 text-claude-text-light">
+    <p>评论功能暂未启用</p>
+  </div>
+)}
+---
+
+<div id="giscus-container">
+  <script is:inline src="https://giscus.app/client.js"
+    data-repo={giscusConfig.repo}
+    data-repo-id={giscusConfig.repoId}
+    data-category={giscusConfig.category}
+    data-category-id={giscusConfig.categoryId}
+    data-mapping={giscusConfig.mapping}
+    data-strict={giscusConfig.strict}
+    data-reactions-enabled={giscusConfig.reactionsEnabled}
+    data-emit-metadata={giscusConfig.emitMetadata}
+    data-input-position={giscusConfig.inputPosition}
+    data-lang={giscusConfig.lang}
+    data-theme={giscusConfig.theme}
+    crossorigin="anonymous"
+    async>
+  </script>
+</div>
+
+<style>
+  #giscus-container {
+    @apply mt-8;
+  }
+
+  /* 自定义 giscus 样式以匹配 Claude 风格 */
+  #giscus-container :global(.gsc-comments) {
+    @apply font-sans;
+  }
+
+  #giscus-container :global(.gsc-header) {
+    @apply border-claude-border;
+  }
+
+  #giscus-container :global(.gsc-input) {
+    @apply bg-claude-warm border-claude-border rounded-lg;
+  }
+</style>

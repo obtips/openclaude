@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --claude-cream: #F5F1E8;
+    --claude-warm: #FAF8F3;
+    --claude-text: #1A1A1A;
+    --claude-text-light: #6B6B6B;
+    --claude-accent: #D4A574;
+    --claude-border: #E8E4DB;
+  }
+
+  * {
+    @apply border-claude-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-claude-cream text-claude-text font-sans antialiased;
+    font-family: 'Figtree', system-ui, sans-serif;
+    line-height: 1.6;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight;
+  }
+
+  h1 {
+    @apply text-4xl md:text-5xl font-bold;
+  }
+
+  h2 {
+    @apply text-2xl md:text-3xl font-semibold;
+  }
+
+  h3 {
+    @apply text-xl md:text-2xl font-semibold;
+  }
+
+  p {
+    @apply text-claude-text leading-relaxed;
+  }
+
+  a {
+    @apply text-claude-accent hover:opacity-70 transition-opacity;
+  }
+
+  code {
+    @apply bg-claude-warm px-1.5 py-0.5 rounded text-sm font-mono;
+  }
+
+  pre {
+    @apply bg-claude-warm p-4 rounded-lg overflow-x-auto;
+  }
+
+  pre code {
+    @apply bg-transparent px-0 py-0;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-claude-text text-white rounded-lg hover:opacity-90 transition-opacity;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-white text-claude-text border rounded-lg hover:bg-claude-warm transition-colors;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-soft p-6 transition-shadow hover:shadow-soft-lg;
+  }
+}
+
+/* Markdown 内容样式 */
+.prose {
+  @apply max-w-none;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  @apply mt-8 mb-4;
+}
+
+.prose p {
+  @apply my-4;
+}
+
+.prose ul,
+.prose ol {
+  @apply my-4 pl-6;
+}
+
+.prose li {
+  @apply my-2;
+}
+
+.prose ul {
+  @apply list-disc;
+}
+
+.prose ol {
+  @apply list-decimal;
+}
+
+.prose a {
+  @apply underline underline-offset-2;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-claude-accent pl-4 italic text-claude-text-light my-4;
+}
+
+.prose img {
+  @apply rounded-lg my-4;
+}
+
+.prose hr {
+  @apply border-claude-border my-8;
+}

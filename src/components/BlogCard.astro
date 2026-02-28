@@ -1,0 +1,83 @@
+---
+interface Props {
+  title: string
+  description: string
+  date: Date
+  author: string
+  tags: string[]
+  category: string
+  slug: string
+  image?: string
+  featured?: boolean
+}
+
+const {
+  title,
+  description,
+  date,
+  author,
+  tags,
+  category,
+  slug,
+  image,
+  featured = false
+} = Astro.props
+---
+
+<a href={`/blog/${slug}/`} class="group">
+  <article class={`card h-full flex flex-col overflow-hidden ${
+    featured ? 'md:col-span-2' : ''
+  }`}>
+    <!-- 文章封面图 -->
+    {image && (
+      <div class={`aspect-video ${featured ? 'aspect-[16/9]' : ''} overflow-hidden bg-claude-warm`}>
+        <img
+          src={image}
+          alt={title}
+          class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          loading="lazy"
+        />
+      </div>
+    )}
+
+    <!-- 文章内容 -->
+    <div class="p-6 flex-1 flex flex-col">
+      <!-- 分类标签 -->
+      <div class="mb-3">
+        <span class="text-xs px-2 py-1 rounded-full bg-claude-accent text-white">
+          {category}
+        </span>
+      </div>
+
+      <!-- 标题 -->
+      <h3 class={`font-bold mb-2 group-hover:text-claude-accent transition-colors ${
+        featured ? 'text-2xl' : 'text-xl'
+      }`}>
+        {title}
+      </h3>
+
+      <!-- 描述 -->
+      <p class="text-claude-text-light mb-4 flex-1 line-clamp-3">
+        {description}
+      </p>
+
+      <!-- 元信息 -->
+      <div class="flex items-center gap-4 text-sm text-claude-text-light">
+        <span>{date.toLocaleDateString('zh-CN')}</span>
+        <span>·</span>
+        <span>{author}</span>
+      </div>
+
+      <!-- 标签 -->
+      {tags && tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mt-4">
+          {tags.slice(0, 3).map(tag => (
+            <span class="text-xs px-2 py-1 rounded bg-claude-warm text-claude-text-light">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  </article>
+</a>

@@ -1,0 +1,192 @@
+---
+import Layout from './Layout.astro'
+import Giscus from '../components/Giscus.astro'
+
+interface Props {
+  title?: string
+  description?: string
+  date?: Date
+  author?: string
+  tags?: string[]
+  category?: string
+  image?: string
+}
+
+const {
+  title,
+  description,
+  date,
+  author = 'OpenClaude Team',
+  tags = [],
+  category = '技术',
+  image
+} = Astro.props
+---
+
+<Layout title={title} description={description}>
+  <article class="max-w-3xl mx-auto px-4 py-12">
+    <!-- 文章头部 -->
+    <header class="mb-10">
+      <!-- 分类 -->
+      <div class="mb-4">
+        <span class="text-xs px-3 py-1 rounded-full bg-claude-accent text-white">
+          {category}
+        </span>
+      </div>
+
+      <!-- 标题 -->
+      <h1 class="text-4xl md:text-5xl font-bold mb-6">
+        {title}
+      </h1>
+
+      <!-- 描述 -->
+      <p class="text-xl text-claude-text-light mb-6">
+        {description}
+      </p>
+
+      <!-- 封面图 -->
+      {image && (
+        <div class="mb-6 rounded-xl overflow-hidden shadow-soft">
+          <img
+            src={image}
+            alt={title}
+            class="w-full"
+          />
+        </div>
+      )}
+
+      <!-- 元信息 -->
+      <div class="flex items-center gap-4 text-claude-text-light">
+        <span class="font-medium">{author}</span>
+        <span>·</span>
+        <time datetime={date?.toISOString()}>
+          {date?.toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+          })}
+        </time>
+      </div>
+
+      <!-- 标签 -->
+      {tags && tags.length > 0 && (
+        <div class="flex flex-wrap gap-2 mt-4">
+          {tags.map(tag => (
+            <span class="text-sm px-3 py-1 rounded-full bg-claude-warm text-claude-text-light">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
+    </header>
+
+    <!-- 文章正文 -->
+    <div class="prose prose-lg max-w-none">
+      <slot />
+    </div>
+
+    <!-- 文章底部 -->
+    <footer class="mt-12 pt-8 border-t border-claude-border">
+      <div class="text-center text-claude-text-light">
+        <p>
+          感谢阅读！欢迎在下方留言讨论
+        </p>
+      </div>
+    </footer>
+
+    <!-- 评论区 -->
+    <div class="mt-12">
+      <Giscus />
+    </div>
+  </article>
+
+  <!-- 返回按钮 -->
+  <div class="max-w-3xl mx-auto px-4 pb-12">
+    <a
+      href="/blog/"
+      class="inline-flex items-center gap-2 text-claude-accent hover:underline"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+      返回博客列表
+    </a>
+  </div>
+</Layout>
+
+<style>
+  .prose {
+    @apply text-claude-text;
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3,
+  .prose h4,
+  .prose h5,
+  .prose h6 {
+    @apply font-bold text-claude-text mt-8 mb-4;
+  }
+
+  .prose h1 { @apply text-3xl; }
+  .prose h2 { @apply text-2xl; }
+  .prose h3 { @apply text-xl; }
+
+  .prose p {
+    @apply mb-4 leading-relaxed;
+  }
+
+  .prose a {
+    @apply text-claude-accent hover:underline;
+  }
+
+  .prose ul,
+  .prose ol {
+    @apply mb-4 ml-6;
+  }
+
+  .prose li {
+    @apply mb-2;
+  }
+
+  .prose ul {
+    @apply list-disc;
+  }
+
+  .prose ol {
+    @apply list-decimal;
+  }
+
+  .prose blockquote {
+    @apply border-l-4 border-claude-accent pl-4 italic text-claude-text-light my-4;
+  }
+
+  .prose code {
+    @apply bg-claude-warm px-1 py-0.5 rounded text-sm;
+  }
+
+  .prose pre {
+    @apply bg-claude-warm rounded-lg p-4 overflow-x-auto my-4;
+  }
+
+  .prose pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .prose img {
+    @apply rounded-lg my-6;
+  }
+
+  .prose table {
+    @apply w-full my-6 border-collapse;
+  }
+
+  .prose th,
+  .prose td {
+    @apply border border-claude-border px-4 py-2;
+  }
+
+  .prose th {
+    @apply bg-claude-warm font-semibold;
+  }
+</style>

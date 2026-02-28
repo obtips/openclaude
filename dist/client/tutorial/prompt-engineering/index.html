@@ -1,0 +1,193 @@
+<!DOCTYPE html><html lang="zh"> <head><meta charset="UTF-8"><meta name="description" content="学习如何编写有效的 Prompt，让 Claude 更好地理解你的需求并提供高质量回复。"><meta name="viewport" content="width=device-width"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><meta name="generator" content="Astro v5.18.0"><link rel="canonical" href="https://openclau.de/tutorial/prompt-engineering/"><!-- Open Graph / Facebook --><meta property="og:type" content="website"><meta property="og:url" content="https://openclau.de/tutorial/prompt-engineering/"><meta property="og:title" content="Prompt 工程技巧"><meta property="og:description" content="学习如何编写有效的 Prompt，让 Claude 更好地理解你的需求并提供高质量回复。"><!-- Twitter --><meta property="twitter:card" content="summary_large_image"><meta property="twitter:url" content="https://openclau.de/tutorial/prompt-engineering/"><meta property="twitter:title" content="Prompt 工程技巧"><meta property="twitter:description" content="学习如何编写有效的 Prompt，让 Claude 更好地理解你的需求并提供高质量回复。"><title>Prompt 工程技巧</title><link rel="stylesheet" href="/_astro/_slug_.HgbD0lo7.css">
+<style>#giscus-container[data-astro-cid-an2nl7ar]{margin-top:2rem}#giscus-container[data-astro-cid-an2nl7ar] .gsc-comments{font-family:Figtree,system-ui,sans-serif}#giscus-container[data-astro-cid-an2nl7ar] .gsc-header{--tw-border-opacity: 1;border-color:rgb(232 228 219 / var(--tw-border-opacity, 1))}#giscus-container[data-astro-cid-an2nl7ar] .gsc-input{border-radius:12px;--tw-border-opacity: 1;border-color:rgb(232 228 219 / var(--tw-border-opacity, 1));--tw-bg-opacity: 1;background-color:rgb(250 248 243 / var(--tw-bg-opacity, 1))}
+article[data-astro-cid-4gy3mp43]{border-radius:16px;--tw-bg-opacity: 1;background-color:rgb(255 255 255 / var(--tw-bg-opacity, 1));padding:1.5rem;--tw-shadow: 0 2px 8px rgba(0,0,0,.04);--tw-shadow-colored: 0 2px 8px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000),var(--tw-ring-shadow, 0 0 #0000),var(--tw-shadow)}@media(min-width:768px){article[data-astro-cid-4gy3mp43]{padding:2rem}}
+</style></head> <body class="min-h-screen flex flex-col"> <header class="sticky top-0 z-50 bg-claude-cream/80 backdrop-blur-md border-b border-claude-border"> <div class="max-w-6xl mx-auto px-4"> <div class="flex items-center justify-between h-16"> <!-- Logo --> <a href="/" class="flex items-center gap-2 hover:opacity-70 transition-opacity"> <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="32" height="32" rx="8" fill="#D4A574"></rect> <path d="M10 12C10 10.8954 10.8954 10 12 10H20C21.1046 10 22 10.8954 22 12V20C22 21.1046 21.1046 22 20 22H12C10.8954 22 10 21.1046 10 20V12Z" fill="white"></path> <path d="M14 15L16 17L18 15" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </svg> <span class="font-semibold text-xl">OpenClaude</span> </a> <!-- 导航 --> <nav class="hidden md:flex items-center gap-6"> <a href="/" class="text-claude-text-light hover:text-claude-text transition-colors"> 首页 </a> <a href="/tutorial/" class="text-claude-text-light hover:text-claude-text transition-colors"> 教程 </a> <a href="/blog/" class="text-claude-text-light hover:text-claude-text transition-colors"> 博客 </a> <a href="/about" class="text-claude-text-light hover:text-claude-text transition-colors"> 关于 </a>  </nav> <!-- 语言切换 --> <a href="/en/tutorial/prompt-engineering/" class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-claude-border hover:bg-claude-warm transition-colors text-sm" title="Switch to English"> <span>🌐</span> <span>EN</span> </a> </div> </div> </header> <main class="flex-1">  <div class="max-w-6xl mx-auto px-4 py-8" data-astro-cid-4gy3mp43> <div class="flex flex-col lg:flex-row gap-8" data-astro-cid-4gy3mp43> <!-- 侧边导航 --> <aside class="lg:w-64 flex-shrink-0" data-astro-cid-4gy3mp43> <aside class="sticky top-24 self-start"> <div class="bg-white rounded-xl shadow-soft p-4"> <h3 class="font-semibold mb-4 text-sm text-claude-text-light uppercase tracking-wider"> 教程目录 </h3> <nav class="space-y-4"> <div> <h4 class="text-xs font-semibold text-claude-accent mb-2"> 入门 </h4> <ul class="space-y-1"> <li> <a href="/tutorial/getting-started/" class="block text-sm py-1 px-2 rounded transition-colors text-claude-text-light hover:text-claude-text hover:bg-claude-warm"> Claude API 入门 </a> </li> </ul> </div><div> <h4 class="text-xs font-semibold text-claude-accent mb-2"> 进阶 </h4> <ul class="space-y-1"> <li> <a href="/tutorial/prompt-engineering/" class="block text-sm py-1 px-2 rounded transition-colors bg-claude-accent/10 text-claude-accent font-medium"> Prompt 工程技巧 </a> </li> </ul> </div> </nav> </div> </aside> </aside> <!-- 主内容 --> <article class="flex-1 min-w-0" data-astro-cid-4gy3mp43> <div class="prose" data-astro-cid-4gy3mp43>  <div class="mb-8"> <div class="flex items-center gap-2 mb-4"> <span class="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700"> 进阶 </span> <span class="text-sm text-claude-text-light"> 2025/1/20 </span> </div> <h1 class="text-3xl md:text-4xl font-bold mb-4">Prompt 工程技巧</h1> <p class="text-lg text-claude-text-light">学习如何编写有效的 Prompt，让 Claude 更好地理解你的需求并提供高质量回复。</p> <div class="flex gap-2 mt-4"> <span class="text-sm px-2 py-1 rounded bg-claude-warm text-claude-text-light">
+#prompt </span><span class="text-sm px-2 py-1 rounded bg-claude-warm text-claude-text-light">
+#技巧 </span><span class="text-sm px-2 py-1 rounded bg-claude-warm text-claude-text-light">
+#最佳实践 </span> </div> </div> <h1 id="prompt-工程技巧">Prompt 工程技巧</h1>
+<p>编写优秀的 Prompt 是与 AI 有效沟通的关键。本教程将分享实用的 Prompt 工程技巧。</p>
+<h2 id="核心原则">核心原则</h2>
+<h3 id="1-清晰具体">1. 清晰具体</h3>
+<p><strong>差的 Prompt：</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>帮我写个函数</span></span></code></pre>
+<p><strong>好的 Prompt：</strong></p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>请用 Python 写一个函数，接收一个字符串列表，返回按字母顺序排序后的列表。</span></span>
+<span class="line"><span>如果列表为空，返回空列表。包含类型注解和简单的 docstring。</span></span></code></pre>
+<h3 id="2-提供上下文">2. 提供上下文</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>我正在开发一个 Django 电商网站，需要实现购物车功能。</span></span>
+<span class="line"><span>请帮我设计购物车的数据模型，包括以下功能：</span></span>
+<span class="line"><span>- 添加商品</span></span>
+<span class="line"><span>- 移除商品</span></span>
+<span class="line"><span>- 更新数量</span></span>
+<span class="line"><span>- 计算总价</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>使用 Django 的 ORM，并考虑库存管理。</span></span></code></pre>
+<h3 id="3-明确输出格式">3. 明确输出格式</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>请分析以下代码的性能问题：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>[代码...]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>请按以下格式输出：</span></span>
+<span class="line"><span>1. 问题识别：列出发现的问题</span></span>
+<span class="line"><span>2. 影响：说明每个问题的影响</span></span>
+<span class="line"><span>3. 建议：提供具体的优化方案</span></span>
+<span class="line"><span>4. 示例：给出优化后的代码</span></span></code></pre>
+<h2 id="高级技巧">高级技巧</h2>
+<h3 id="角色扮演">角色扮演</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>你是一位有 10 年经验的高级 Python 工程师，</span></span>
+<span class="line"><span>精通 Django、FastAPI 和异步编程。</span></span>
+<span class="line"><span>请审查以下代码，并提出改进建议：</span></span></code></pre>
+<h3 id="思维链-chain-of-thought">思维链 (Chain of Thought)</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>让我们一步步解决这个问题：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>第一步：分析问题的核心需求...</span></span>
+<span class="line"><span>第二步：列出可能的解决方案...</span></span>
+<span class="line"><span>第三步：评估每种方案的优劣...</span></span>
+<span class="line"><span>第四步：选择最佳方案并实现...</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>现在，请按照这个思路来解决以下问题...</span></span></code></pre>
+<h3 id="少样本学习-few-shot-learning">少样本学习 (Few-Shot Learning)</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>示例 1：</span></span>
+<span class="line"><span>输入：今天天气真好</span></span>
+<span class="line"><span>输出：正面情感</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>示例 2：</span></span>
+<span class="line"><span>这个产品质量太差了</span></span>
+<span class="line"><span>输出：负面情感</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>示例 3：</span></span>
+<span class="line"><span>还可以吧</span></span>
+<span class="line"><span>输出：中性情感</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>现在请判断：</span></span>
+<span class="line"><span>这家餐厅的菜品味道不错，但价格有点贵</span></span>
+<span class="line"><span>输出：</span></span></code></pre>
+<h3 id="结构化输出">结构化输出</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>请以 JSON 格式返回以下信息：</span></span>
+<span class="line"><span>{</span></span>
+<span class="line"><span>  "summary": "简要总结",</span></span>
+<span class="line"><span>  "key_points": ["要点1", "要点2"],</span></span>
+<span class="line"><span>  "action_items": ["行动项1"],</span></span>
+<span class="line"><span>  "confidence": 0.95</span></span>
+<span class="line"><span>}</span></span></code></pre>
+<h2 id="常见场景">常见场景</h2>
+<h3 id="代码审查">代码审查</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>请从以下角度审查这段代码：</span></span>
+<span class="line"><span>1. 代码风格和可读性</span></span>
+<span class="line"><span>2. 性能问题</span></span>
+<span class="line"><span>3. 潜在的 bug</span></span>
+<span class="line"><span>4. 安全性考虑</span></span>
+<span class="line"><span>5. 测试建议</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>代码：</span></span>
+<span class="line"><span>[你的代码]</span></span></code></pre>
+<h3 id="技术写作">技术写作</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>请为以下 API 端点编写文档：</span></span>
+<span class="line"><span>- 功能描述</span></span>
+<span class="line"><span>- 请求参数（类型、是否必需、说明）</span></span>
+<span class="line"><span>- 响应格式</span></span>
+<span class="line"><span>- 使用示例</span></span>
+<span class="line"><span>- 错误处理</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>API 端点：GET /api/users/{id}</span></span></code></pre>
+<h3 id="调试辅助">调试辅助</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>我遇到了以下错误：</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>[错误信息]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>相关代码：</span></span>
+<span class="line"><span>[代码片段]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>请帮我：</span></span>
+<span class="line"><span>1. 分析错误原因</span></span>
+<span class="line"><span>2. 提供修复方案</span></span>
+<span class="line"><span>3. 解释如何避免类似问题</span></span></code></pre>
+<h2 id="避免的陷阱">避免的陷阱</h2>
+<h3 id="1-过于宽泛">1. 过于宽泛</h3>
+<p>❌ <code>告诉我关于 JavaScript 的一切</code></p>
+<p>✅ <code>解释 JavaScript 中的闭包概念，并给出一个实际应用场景</code></p>
+<h3 id="2-缺少上下文">2. 缺少上下文</h3>
+<p>❌ <code>这个函数有什么问题？</code>
+（没有提供代码）</p>
+<p>✅ <code>请审查以下函数...</code>（附上代码和使用场景）</p>
+<h3 id="3-一次性要求太多">3. 一次性要求太多</h3>
+<p>❌ <code>帮我构建一个完整的电商网站，包括前后端、数据库、支付、物流...</code></p>
+<p>✅ <code>我们先从用户认证模块开始，使用 JWT 实现登录功能</code></p>
+<h2 id="实用模板">实用模板</h2>
+<h3 id="学习新概念">学习新概念</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>请用以下方式解释 [主题]：</span></span>
+<span class="line"><span>1. 简单定义（一句话）</span></span>
+<span class="line"><span>2. 核心概念（3-5 点）</span></span>
+<span class="line"><span>3. 实际应用示例</span></span>
+<span class="line"><span>4. 与 [相关概念] 的区别</span></span>
+<span class="line"><span>5. 推荐的学习资源</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>面向有 [背景] 的初学者。</span></span></code></pre>
+<h3 id="代码重构">代码重构</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>请重构以下代码，目标是：</span></span>
+<span class="line"><span>1. 提高可读性</span></span>
+<span class="line"><span>2. 降低复杂度</span></span>
+<span class="line"><span>3. 遵循 [语言/框架] 最佳实践</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>原代码：</span></span>
+<span class="line"><span>[代码]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>重构后请：</span></span>
+<span class="line"><span>- 保持相同的功能</span></span>
+<span class="line"><span>- 添加注释说明改动原因</span></span>
+<span class="line"><span>- 指出改进的具体点</span></span></code></pre>
+<h3 id="问题诊断">问题诊断</h3>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span>问题描述：</span></span>
+<span class="line"><span>[详细描述问题]</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>环境信息：</span></span>
+<span class="line"><span>- 语言/框架版本</span></span>
+<span class="line"><span>- 运行环境</span></span>
+<span class="line"><span>- 相关配置</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>已尝试的解决方案：</span></span>
+<span class="line"><span>1. [方案1] - 结果</span></span>
+<span class="line"><span>2. [方案2] - 结果</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span>请帮我：</span></span>
+<span class="line"><span>1. 分析可能的原因</span></span>
+<span class="line"><span>2. 提供诊断步骤</span></span>
+<span class="line"><span>3. 给出解决方案</span></span></code></pre>
+<h2 id="进阶迭代优化">进阶：迭代优化</h2>
+<p>优秀的 Prompt 往往需要多次迭代：</p>
+<pre class="astro-code github-dark" style="background-color:#24292e;color:#e1e4e8; overflow-x: auto;" tabindex="0" data-language="plaintext"><code><span class="line"><span># 第一版</span></span>
+<span class="line"><span>帮我写个爬虫</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 第二版</span></span>
+<span class="line"><span>帮我用 Python 写一个网页爬虫，使用 BeautifulSoup</span></span>
+<span class="line"><span># 输出：基础的爬虫代码</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 第三版</span></span>
+<span class="line"><span>在上面的基础上，添加：</span></span>
+<span class="line"><span>- 请求头伪装</span></span>
+<span class="line"><span>- 随机延迟</span></span>
+<span class="line"><span>- 错误重试机制</span></span>
+<span class="line"><span>- 日志记录</span></span>
+<span class="line"><span># 输出：更健壮的爬虫</span></span>
+<span class="line"><span></span></span>
+<span class="line"><span># 第四版</span></span>
+<span class="line"><span>请进一步优化，使其可以：</span></span>
+<span class="line"><span>- 支持多线程</span></span>
+<span class="line"><span>- 限速控制</span></span>
+<span class="line"><span>- 数据持久化到数据库</span></span>
+<span class="line"><span># 输出：生产级的爬虫</span></span></code></pre>
+<h2 id="总结">总结</h2>
+<p>好的 Prompt 应该：</p>
+<ul>
+<li>✅ <strong>具体明确</strong> - 说清楚你想要什么</li>
+<li>✅ <strong>提供上下文</strong> - 给出足够的背景信息</li>
+<li>✅ <strong>指定格式</strong> - 明确期望的输出格式</li>
+<li>✅ <strong>循序渐进</strong> - 复杂任务分解成步骤</li>
+<li>✅ <strong>迭代优化</strong> - 根据结果不断改进</li>
+</ul>
+<p>记住：Prompt 工程是一门实践的艺术，多尝试、多调整！</p>  </div> <!-- 评论区 --> <div class="mt-12 pt-8 border-t border-claude-border" data-astro-cid-4gy3mp43> <div class="text-center py-8 text-claude-text-light" data-astro-cid-an2nl7ar><p data-astro-cid-an2nl7ar>评论功能暂未启用</p></div>
+---
+<div id="giscus-container" data-astro-cid-an2nl7ar> <script src="https://giscus.app/client.js" data-repo data-repo-id data-category="Announcements" data-category-id data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0" data-input-position="bottom" data-lang="zh-CN" data-theme="light" crossorigin="anonymous" async>
+  </script> </div>  </div> </article> </div> </div>  </main> <footer class="border-t border-claude-border bg-claude-warm"> <div class="max-w-6xl mx-auto px-4 py-8"> <div class="flex flex-col md:flex-row items-center justify-between gap-4"> <!-- Logo & Tagline --> <div class="flex items-center gap-2"> <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"> <rect width="32" height="32" rx="8" fill="#D4A574"></rect> <path d="M10 12C10 10.8954 10.8954 10 12 10H20C21.1046 10 22 10.8954 22 12V20C22 21.1046 21.1046 22 20 22H12C10.8954 22 10 21.1046 10 20V12Z" fill="white"></path> <path d="M14 15L16 17L18 15" stroke="#1A1A1A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path> </svg> <span class="text-claude-text-light text-sm"> 用 <a href="https://astro.build" target="_blank" class="text-claude-accent">Astro</a> </span> </div> <!-- 链接 --> <div class="flex items-center gap-4"> <a href="https://github.com/openclaude" target="_blank" rel="noopener noreferrer" class="text-claude-text-light hover:text-claude-text transition-colors" title="GitHub"> <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"> <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"></path> </svg> </a> <a href="https://x.com/openclaude" target="_blank" rel="noopener noreferrer" class="text-claude-text-light hover:text-claude-text transition-colors" title="X (Twitter)"> <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"> <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path> </svg> </a> </div> <!-- 版权 --> <p class="text-claude-text-light text-sm">
+© 2026 OpenClaude
+</p> </div> </div> </footer> </body></html> 

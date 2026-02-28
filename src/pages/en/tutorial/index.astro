@@ -1,0 +1,65 @@
+---
+import Layout from '../../../layouts/Layout.astro'
+import { getCollection } from 'astro:content'
+import TutorialCard from '../../../components/TutorialCard.astro'
+
+const allTutorials = await getCollection('tutorial-en', ({ data }) => data.draft !== true)
+
+// Group by difficulty
+const byDifficulty = allTutorials.reduce((acc, tutorial) => {
+  const diff = tutorial.data.difficulty || 'beginner'
+  if (!acc[diff]) acc[diff] = []
+  acc[diff].push(tutorial)
+  return acc
+}, {} as Record<string, typeof allTutorials>)
+
+const difficultyOrder = ['beginner', 'intermediate', 'advanced']
+const difficultyLabels = {
+  beginner: 'Beginner Tutorials',
+  intermediate: 'Intermediate Tutorials',
+  advanced: 'Advanced Tutorials',
+}
+---
+
+<Layout title="Tutorials - OpenClaude" description="Browse all Claude AI tutorials" lang="en">
+  <div class="max-w-6xl mx-auto px-4 py-12">
+    <div class="text-center mb-12">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">Claude Tutorials</h1>
+      <p class="text-xl text-claude-text-light">
+        Systematically learn Claude AI techniques and best practices
+      </p>
+    </div>
+
+    {
+      difficultyOrder.map(difficulty => {
+        const items = byDifficulty[difficulty]
+        if (!items || items.length === 0) return null
+
+        return (
+          <section class="mb-16">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+              <span class={`w-3 h-3 rounded-full ${
+                difficulty === 'beginner' ? 'bg-green-400' :
+                difficulty === 'intermediate' ? 'bg-yellow-400' :
+                'bg-red-400'
+              }`}></span>
+              {difficultyLabels[difficulty as keyof typeof difficultyLabels]}
+            </h2>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {items.map(tutorial => (
+                <TutorialCard
+                  title={tutorial.data.title}
+                  description={tutorial.data.description}
+                  difficulty={tutorial.data.difficulty}
+                  tags={tutorial.data.tags}
+                  slug={tutorial.slug}
+                  lang="en"
+                />
+              ))}
+            </div>
+          </section>
+        )
+      })
+    }
+  </div>
+</Layout>

@@ -1,0 +1,42 @@
+---
+import Layout from './Layout.astro'
+import Sidebar from '../components/Sidebar.astro'
+import Giscus from '../components/Giscus.astro'
+
+interface Props {
+  title?: string
+  description?: string
+  lang?: string
+}
+
+const { title, description, lang = 'zh' } = Astro.props
+---
+
+<Layout title={title} description={description} lang={lang}>
+  <div class="max-w-6xl mx-auto px-4 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+      <!-- 侧边导航 -->
+      <aside class="lg:w-64 flex-shrink-0">
+        <Sidebar lang={lang} />
+      </aside>
+
+      <!-- 主内容 -->
+      <article class="flex-1 min-w-0">
+        <div class="prose">
+          <slot />
+        </div>
+
+        <!-- 评论区 -->
+        <div class="mt-12 pt-8 border-t border-claude-border">
+          <Giscus />
+        </div>
+      </article>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  article {
+    @apply bg-white rounded-xl shadow-soft p-6 md:p-8;
+  }
+</style>

@@ -1,0 +1,711 @@
+---
+import AdminLayout from '../../components/admin/AdminLayout.astro'
+---
+
+<AdminLayout title="管理后台">
+  <div id="admin-root"></div>
+</AdminLayout>
+
+<style>
+  #admin-root {
+    @apply min-h-screen;
+  }
+
+  /* 全局样式覆盖 */
+  #admin-root input:not([type="checkbox"]),
+  #admin-root textarea,
+  #admin-root select {
+    @apply border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-claude-accent focus:border-transparent transition-all;
+    @apply bg-white/80 backdrop-blur;
+  }
+
+  #admin-root button {
+    @apply rounded-lg px-5 py-2.5 font-medium transition-all duration-200;
+  }
+
+  #admin-root button:disabled {
+    @apply opacity-50 cursor-not-allowed;
+  }
+
+  #admin-root .btn-primary {
+    @apply bg-claude-accent text-white hover:bg-opacity-90 shadow-lg shadow-claude-accent/30;
+  }
+
+  #admin-root .btn-secondary {
+    @apply bg-white text-claude-text border border-claude-border hover:bg-claude-warm;
+  }
+
+  #admin-root .btn-danger {
+    @apply bg-red-500 text-white hover:bg-red-600;
+  }
+
+  #admin-root table th {
+    @apply text-xs font-semibold text-gray-500 uppercase tracking-wider bg-gray-50/50;
+  }
+
+  #admin-root table tr:hover {
+    @apply bg-claude-warm/30;
+  }
+</style>
+
+<script is:inline>
+  (async () => {
+    const React = await import('https://esm.sh/react@18')
+    const { createRoot } = await import('https://esm.sh/react-dom@18/client')
+    const { default: ReactMarkdown } = await import('https://esm.sh/react-markdown@9?deps=react@18')
+
+    const initialState = {
+      view: 'login',
+      posts: [],
+      error: '',
+      token: '',
+      owner: '',
+      repo: '',
+    }
+
+    function AdminApp() {
+      const [state, setState] = React.useState(initialState)
+
+      React.useEffect(() => {
+        const token = sessionStorage.getItem('github_token')
+        const owner = sessionStorage.getItem('github_owner')
+        const repo = sessionStorage.getItem('github_repo')
+
+        if (token && owner && repo) {
+          loadPosts(token, owner, repo)
+        }
+      }, [])
+
+      const loadPosts = async (token, owner, repo) => {
+        try {
+          const response = await fetch('/api/github/posts', {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'X-GitHub-Owner': owner,
+              'X-GitHub-Repo': repo,
+            },
+          })
+
+          if (response.ok) {
+            const posts = await response.json()
+            setState({
+              view: 'list',
+              posts,
+              error: '',
+              token,
+              owner,
+              repo,
+            })
+          } else {
+            setState({ ...initialState, error: '登录失效，请重新登录' })
+          }
+        } catch (e) {
+          setState({ ...initialState, error: '无法连接到服务器' })
+        }
+      }
+
+      const handleLogin = async (token, owner, repo) => {
+        await loadPosts(token, owner, repo)
+      }
+
+      const handleNew = () => {
+        setState({ ...state, view: 'new', currentPost: undefined })
+      }
+
+      const handleEdit = async (slug) => {
+        try {
+          const response = await fetch(`/api/github/posts/${slug}`, {
+            headers: {
+              'Authorization': `Bearer ${state.token}`,
+              'X-GitHub-Owner': state.owner,
+              'X-GitHub-Repo': state.repo,
+            },
+          })
+
+          if (response.ok) {
+            const post = await response.json()
+            setState({ ...state, view: 'edit', currentPost: post })
+          } else {
+            setState({ ...state, error: '加载文章失败' })
+          }
+        } catch (e) {
+          setState({ ...state, error: '加载文章失败' })
+        }
+      }
+
+      const handleSave = async (post, sha) => {
+        const isNew = state.view === 'new'
+
+        try {
+          const slug = isNew ? post.newSlug || undefined : state.currentPost?.slug
+          const url = isNew ? '/api/github/posts' : `/api/github/posts/${slug}`
+
+          const response = await fetch(url, {
+            method: isNew ? 'POST' : 'PUT',
+            headers: {
+              'Authorization': `Bearer ${state.token}`,
+              'X-GitHub-Owner': state.owner,
+              'X-GitHub-Repo': state.repo,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ ...post, sha: sha || state.currentPost?.sha }),
+          })
+
+          if (response.ok) {
+            await loadPosts(state.token, state.owner, state.repo)
+            return true
+          } else {
+            setState({ ...state, error: '保存失败' })
+            return false
+          }
+        } catch (e) {
+          setState({ ...state, error: '保存失败' })
+          return false
+        }
+      }
+
+      const handleDelete = async (slug, sha) => {
+        try {
+          const response = await fetch(`/api/github/posts/${slug}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${state.token}`,
+              'X-GitHub-Owner': state.owner,
+              'X-GitHub-Repo': state.repo,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ sha }),
+          })
+
+          if (response.ok) {
+            setState({ ...state, posts: state.posts.filter(p => p.slug !== slug) })
+          } else {
+            setState({ ...state, error: '删除失败' })
+          }
+        } catch (e) {
+          setState({ ...state, error: '删除失败' })
+        }
+      }
+
+      const handleCancel = () => {
+        setState({ ...state, view: 'list' })
+      }
+
+      // 登录组件
+      const Login = ({ onLogin, error }) => {
+        const [token, setToken] = React.useState('')
+        const [owner, setOwner] = React.useState('')
+        const [repo, setRepo] = React.useState('')
+        const [loading, setLoading] = React.useState(false)
+
+        const handleSubmit = async (e) => {
+          e.preventDefault()
+          if (token.trim() && owner.trim() && repo.trim()) {
+            setLoading(true)
+            await onLogin(token, owner, repo)
+            setLoading(false)
+          }
+        }
+
+        const inputStyle = {
+          width: '100%',
+          padding: '12px 16px',
+          border: '1px solid #E5E7EB',
+          borderRadius: '8px',
+          fontSize: '14px',
+          boxSizing: 'border-box',
+          outline: 'none',
+          transition: 'border-color 0.2s'
+        }
+
+        const labelStyle = {
+          display: 'block',
+          fontSize: '13px',
+          fontWeight: '500',
+          color: '#374151',
+          marginBottom: '8px'
+        }
+
+        return React.createElement('div', {
+          style: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#F5F1E8' }
+        },
+          React.createElement('div', { style: { width: '100%', maxWidth: '380px' } },
+            // 标题
+            React.createElement('div', { style: { textAlign: 'center', marginBottom: '40px' } },
+              React.createElement('h1', { style: { fontSize: '26px', fontWeight: '600', color: '#1A1A1A', marginBottom: '6px', letterSpacing: '-0.5px' } }, 'OpenClaude'),
+              React.createElement('p', { style: { fontSize: '14px', color: '#6B7280' } }, '管理后台登录')
+            ),
+
+            // 表单卡片
+            React.createElement('div', { style: { background: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' } },
+              error && React.createElement('div', {
+                style: { marginBottom: '20px', padding: '12px 16px', background: '#FEF2F2', borderRadius: '8px', fontSize: '14px', color: '#DC2626', border: '1px solid #FECACA' }
+              }, error),
+
+              React.createElement('form', { onSubmit: handleSubmit, style: { display: 'flex', flexDirection: 'column', gap: '20px' } },
+                // Token
+                React.createElement('div', null,
+                  React.createElement('label', { style: labelStyle }, 'GitHub Token'),
+                  React.createElement('input', {
+                    type: 'password',
+                    value: token,
+                    onChange: (e) => setToken(e.target.value),
+                    placeholder: 'ghp_xxxxxxxxxxxx',
+                    required: true,
+                    disabled: loading,
+                    style: inputStyle
+                  })
+                ),
+
+                // 用户名和仓库（并排）
+                React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' } },
+                  React.createElement('div', null,
+                    React.createElement('label', { style: labelStyle }, '用户名'),
+                    React.createElement('input', {
+                      type: 'text',
+                      value: owner,
+                      onChange: (e) => setOwner(e.target.value),
+                      placeholder: 'username',
+                      required: true,
+                      disabled: loading,
+                      style: inputStyle
+                    })
+                  ),
+                  React.createElement('div', null,
+                    React.createElement('label', { style: labelStyle }, '仓库'),
+                    React.createElement('input', {
+                      type: 'text',
+                      value: repo,
+                      onChange: (e) => setRepo(e.target.value),
+                      placeholder: 'repo',
+                      required: true,
+                      disabled: loading,
+                      style: inputStyle
+                    })
+                  )
+                ),
+
+                // 提示
+                React.createElement('div', {
+                  style: { padding: '14px 16px', background: '#FAFAF9', borderRadius: '8px', fontSize: '13px', color: '#6B7280', lineHeight: '1.5', border: '1px solid #E5E7EB' }
+                },
+                  '需要 ',
+                  React.createElement('code', { style: { padding: '2px 6px', background: '#E5E7EB', borderRadius: '4px', fontSize: '12px', fontFamily: 'monospace' } }, 'repo'),
+                  ' 权限 · ',
+                  React.createElement('a', {
+                    href: 'https://github.com/settings/tokens/new',
+                    target: '_blank',
+                    rel: 'noopener noreferrer',
+                    style: { color: '#D4A574', textDecoration: 'none', fontWeight: '500' }
+                  }, '创建 Token →')
+                ),
+
+                // 按钮
+                React.createElement('button', {
+                  type: 'submit',
+                  disabled: loading,
+                  style: { width: '100%', padding: '14px', background: '#D4A574', color: 'white', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: '500', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.6 : 1, letterSpacing: '0.3px' }
+                }, loading ? '登录中...' : '登录')
+              )
+            )
+          )
+        )
+      }
+
+      // 文章列表组件
+      const PostList = ({ posts, onNew, onEdit, onDelete }) => {
+        const [search, setSearch] = React.useState('')
+        const [categoryFilter, setCategoryFilter] = React.useState('全部')
+        const [deleteConfirm, setDeleteConfirm] = React.useState(null)
+
+        const categories = ['全部', ...Array.from(new Set(posts.map(p => p.category)))]
+
+        const filteredPosts = posts.filter(post => {
+          const matchesSearch =
+            post.title.toLowerCase().includes(search.toLowerCase()) ||
+            post.description.toLowerCase().includes(search.toLowerCase())
+          const matchesCategory = categoryFilter === '全部' || post.category === categoryFilter
+          return matchesSearch && matchesCategory
+        })
+
+        const statusBadge = (post) => {
+          if (post.draft) return React.createElement('span', { className: 'px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600' }, '草稿')
+          if (post.featured) return React.createElement('span', { className: 'px-2.5 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-700' }, '精选')
+          return React.createElement('span', { className: 'px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700' }, '已发布')
+        }
+
+        return React.createElement('div', { className: 'max-w-7xl mx-auto px-6 py-10' },
+          // 头部
+          React.createElement('div', { className: 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8' },
+            React.createElement('div', null,
+              React.createElement('h1', { className: 'text-3xl font-bold text-claude-text' }, '文章管理'),
+              React.createElement('p', { className: 'text-claude-text-light mt-1' }, `共 ${posts.length} 篇文章`)
+            ),
+            React.createElement('button', {
+              onClick: onNew,
+              className: 'btn-primary flex items-center justify-center gap-2 py-2.5 px-5',
+            },
+              React.createElement('svg', { className: 'w-5 h-5', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' },
+                React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M12 4v16m8-8H4' })
+              ),
+              '新建文章'
+            )
+          ),
+
+          // 筛选器
+          React.createElement('div', { className: 'bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row gap-4' },
+            React.createElement('div', { className: 'flex-1 relative' },
+              React.createElement('svg', {
+                className: 'absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400',
+                fill: 'none',
+                stroke: 'currentColor',
+                viewBox: '0 0 24 24'
+              },
+                React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' })
+              ),
+              React.createElement('input', {
+                type: 'text',
+                placeholder: '搜索文章...',
+                value: search,
+                onChange: (e) => setSearch(e.target.value),
+                className: 'w-full pl-11',
+              })
+            ),
+            React.createElement('select', {
+              value: categoryFilter,
+              onChange: (e) => setCategoryFilter(e.target.value),
+              className: 'sm:w-40'
+            }, categories.map(cat =>
+              React.createElement('option', { key: cat, value: cat }, cat)
+            ))
+          ),
+
+          // 文章列表
+          filteredPosts.length === 0
+            ? React.createElement('div', { className: 'text-center py-20' },
+                React.createElement('svg', {
+                  className: 'w-16 h-16 mx-auto text-gray-300 mb-4',
+                  fill: 'none',
+                  stroke: 'currentColor',
+                  viewBox: '0 0 24 24'
+                },
+                  React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 1.5, d: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' })
+                ),
+                React.createElement('p', { className: 'text-claude-text-light' }, posts.length === 0 ? '暂无文章，点击上方按钮创建第一篇文章' : '没有匹配的文章')
+              )
+            : React.createElement('div', { className: 'bg-white rounded-xl shadow-sm overflow-hidden' },
+                React.createElement('div', { className: 'overflow-x-auto' },
+                  React.createElement('table', { className: 'w-full' },
+                    React.createElement('thead', { className: 'border-b border-claude-border' },
+                      React.createElement('tr', null,
+                        React.createElement('th', { className: 'px-6 py-4 text-left' }, '文章'),
+                        React.createElement('th', { className: 'px-6 py-4 text-left' }, '分类'),
+                        React.createElement('th', { className: 'px-6 py-4 text-left' }, '状态'),
+                        React.createElement('th', { className: 'px-6 py-4 text-left' }, '日期'),
+                        React.createElement('th', { className: 'px-6 py-4 text-right' }, '操作')
+                      )
+                    ),
+                    React.createElement('tbody', { className: 'divide-y divide-claude-border' },
+                      filteredPosts.map((post) =>
+                        React.createElement('tr', { key: post.slug },
+                          React.createElement('td', { className: 'px-6 py-4' },
+                            React.createElement('div', { className: 'font-semibold text-claude-text' }, post.title),
+                            React.createElement('div', { className: 'text-sm text-claude-text-light truncate max-w-md mt-0.5' }, post.description),
+                            React.createElement('div', { className: 'text-xs text-gray-400 mt-1 font-mono' }, `/${post.slug}`)
+                          ),
+                          React.createElement('td', { className: 'px-6 py-4' },
+                            React.createElement('span', { className: 'px-2.5 py-1 text-xs font-medium rounded-full bg-blue-50 text-blue-700' }, post.category)
+                          ),
+                          React.createElement('td', { className: 'px-6 py-4' }, statusBadge(post)),
+                          React.createElement('td', { className: 'px-6 py-4 text-sm text-claude-text-light' },
+                            new Date(post.date).toLocaleDateString('zh-CN')
+                          ),
+                          React.createElement('td', { className: 'px-6 py-4 text-right' },
+                            React.createElement('div', { className: 'flex items-center justify-end gap-2' },
+                              React.createElement('button', {
+                                onClick: () => onEdit(post.slug),
+                                className: 'text-claude-accent hover:text-opacity-70 font-medium text-sm'
+                              }, '编辑'),
+                              React.createElement('span', { className: 'text-gray-300' }, '|'),
+                              React.createElement('button', {
+                                onClick: () => post.sha && onDelete(post.slug, post.sha),
+                                className: deleteConfirm === post.slug ? 'text-red-500 font-medium text-sm' : 'text-gray-400 hover:text-red-500 text-sm'
+                              }, deleteConfirm === post.slug ? '确认删除?' : '删除')
+                            )
+                          )
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+        )
+      }
+
+      // 文章编辑器组件
+      const PostEditor = ({ initialPost, onSave, onCancel, isNew }) => {
+        const [title, setTitle] = React.useState(initialPost?.title || '')
+        const [description, setDescription] = React.useState(initialPost?.description || '')
+        const [content, setContent] = React.useState(initialPost?.content || '')
+        const [author, setAuthor] = React.useState(initialPost?.author || 'OpenClaude Team')
+        const [tags, setTags] = React.useState(initialPost?.tags?.join(', ') || '')
+        const [category, setCategory] = React.useState(initialPost?.category || '技术')
+        const [draft, setDraft] = React.useState(initialPost?.draft || false)
+        const [featured, setFeatured] = React.useState(initialPost?.featured || false)
+        const [image, setImage] = React.useState(initialPost?.image || '')
+        const [slug, setSlug] = React.useState(initialPost?.slug || '')
+        const [preview, setPreview] = React.useState(false)
+        const [saving, setSaving] = React.useState(false)
+        const [error, setError] = React.useState('')
+
+        const categories = ['技术', '公告', '教程', '产品', '社区']
+
+        const handleSave = async () => {
+          if (!title.trim() || !description.trim()) {
+            setError('标题和描述不能为空')
+            return
+          }
+
+          setSaving(true)
+          setError('')
+
+          const post = {
+            title,
+            description,
+            date: initialPost?.date || new Date().toISOString(),
+            content,
+            author,
+            tags: tags.split(',').map(t => t.trim()).filter(t => t),
+            category,
+            draft,
+            featured,
+            image: image || undefined,
+          }
+
+          if ((isNew || slug !== initialPost?.slug) && slug) {
+            post.newSlug = slug
+          }
+
+          const success = await onSave(post, initialPost?.sha)
+          if (!success) setError('保存失败，请重试')
+          setSaving(false)
+        }
+
+        return React.createElement('div', { className: 'max-w-5xl mx-auto px-6 py-10' },
+          // 头部
+          React.createElement('div', { className: 'flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8' },
+            React.createElement('div', null,
+              React.createElement('h1', { className: 'text-3xl font-bold text-claude-text' }, isNew ? '新建文章' : '编辑文章'),
+              !isNew && React.createElement('p', { className: 'text-claude-text-light mt-1' }, `/${initialPost?.slug}`)
+            ),
+            React.createElement('div', { className: 'flex items-center gap-3' },
+              React.createElement('button', {
+                onClick: () => setPreview(!preview),
+                className: 'btn-secondary flex items-center gap-2',
+              },
+                React.createElement('svg', { className: 'w-4 h-4', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' },
+                  React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: preview ? 'M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z' : 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' })
+                ),
+                preview ? '编辑' : '预览'
+              ),
+              React.createElement('button', {
+                onClick: onCancel,
+                className: 'btn-secondary',
+              }, '取消'),
+              React.createElement('button', {
+                onClick: handleSave,
+                disabled: saving,
+                className: 'btn-primary',
+              }, saving ? '保存中...' : '保存')
+            )
+          ),
+
+          error && React.createElement('div', {
+            className: 'mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-center gap-2'
+          },
+            React.createElement('svg', { className: 'w-5 h-5 flex-shrink-0', fill: 'currentColor', viewBox: '0 0 20 20' },
+              React.createElement('path', { fillRule: 'evenodd', d: 'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z', clipRule: 'evenodd' })
+            ),
+            error
+          ),
+
+          preview
+            ? React.createElement('div', { className: 'bg-white rounded-xl shadow-sm p-8 md:p-12' },
+                React.createElement('div', { className: 'mb-8 pb-8 border-b border-claude-border' },
+                  React.createElement('div', { className: 'flex items-center gap-2 mb-4' },
+                    React.createElement('span', { className: 'px-2.5 py-1 text-xs font-medium rounded-full bg-claude-accent text-white' }, category)
+                  ),
+                  React.createElement('h1', { className: 'text-3xl md:text-4xl font-bold text-claude-text mb-4' }, title),
+                  React.createElement('p', { className: 'text-xl text-claude-text-light' }, description),
+                  tags && React.createElement('div', { className: 'flex flex-wrap gap-2 mt-4' },
+                    tags.split(',').map(tag => tag.trim()).filter(t => t).map(tag =>
+                      React.createElement('span', {
+                        key: tag,
+                        className: 'px-2.5 py-1 text-sm rounded-lg bg-claude-warm text-claude-text-light'
+                      }, `#${tag}`)
+                    )
+                  )
+                ),
+                React.createElement('div', { className: 'prose prose-lg max-w-none' },
+                  React.createElement(ReactMarkdown, { remarkPlugins: [], children: content })
+                )
+              )
+            : React.createElement('div', { className: 'space-y-6' },
+                // 基本信息卡片
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-sm p-6 space-y-5' },
+                  React.createElement('h2', { className: 'text-lg font-semibold text-claude-text flex items-center gap-2' },
+                    React.createElement('svg', { className: 'w-5 h-5 text-claude-accent', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' },
+                      React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' })
+                    ),
+                    '基本信息'
+                  ),
+
+                  React.createElement('div', { className: 'grid md:grid-cols-2 gap-5' },
+                    React.createElement('div', null,
+                      React.createElement('label', { className: 'block text-sm font-medium text-claude-text mb-2' }, 'URL Slug'),
+                      React.createElement('input', {
+                        type: 'text',
+                        value: slug,
+                        onChange: (e) => setSlug(e.target.value),
+                        placeholder: 'your-post-slug',
+                        className: 'font-mono text-sm',
+                      })
+                    ),
+                    React.createElement('div', null,
+                      React.createElement('label', { className: 'block text-sm font-medium text-claude-text mb-2' }, '作者'),
+                      React.createElement('input', {
+                        type: 'text',
+                        value: author,
+                        onChange: (e) => setAuthor(e.target.value),
+                      })
+                    )
+                  ),
+
+                  React.createElement('div', null,
+                    React.createElement('label', { className: 'block text-sm font-medium text-claude-text mb-2' }, '标题 *'),
+                    React.createElement('input', {
+                      type: 'text',
+                      value: title,
+                      onChange: (e) => setTitle(e.target.value),
+                      placeholder: '文章标题',
+                      required: true,
+                      className: 'text-lg',
+                    })
+                  ),
+
+                  React.createElement('div', null,
+                    React.createElement('label', { className: 'block text-sm font-medium text-claude-text mb-2' }, '描述 *'),
+                    React.createElement('textarea', {
+                      value: description,
+                      onChange: (e) => setDescription(e.target.value),
+                      placeholder: '简短描述文章内容',
+                      rows: 2,
+                      required: true,
+                    })
+                  ),
+
+                  React.createElement('div', { className: 'grid md:grid-cols-3 gap-5' },
+                    React.createElement('div', null,
+                      React.createElement('label', { className: 'block text-sm font-medium text-claude-text mb-2' }, '分类'),
+                      React.createElement('select', {
+                        value: category,
+                        onChange: (e) => setCategory(e.target.value),
+                      }, categories.map(cat =>
+                        React.createElement('option', { key: cat, value: cat }, cat)
+                      ))
+                    ),
+                    React.createElement('div', { className: 'md:col-span-2' },
+                      React.createElement('label', { className: 'block text-sm font-medium text-claude-text mb-2' }, '标签'),
+                      React.createElement('input', {
+                        type: 'text',
+                        value: tags,
+                        onChange: (e) => setTags(e.target.value),
+                        placeholder: 'React, JavaScript, 教程',
+                      })
+                    )
+                  ),
+
+                  React.createElement('div', null,
+                    React.createElement('label', { className: 'block text-sm font-medium text-claude-text mb-2' }, '封面图 URL'),
+                    React.createElement('input', {
+                      type: 'text',
+                      value: image,
+                      onChange: (e) => setImage(e.target.value),
+                      placeholder: 'https://example.com/image.jpg',
+                    })
+                  ),
+
+                  React.createElement('div', { className: 'flex items-center gap-6 pt-2' },
+                    React.createElement('label', { className: 'flex items-center gap-2 cursor-pointer' },
+                      React.createElement('input', {
+                        type: 'checkbox',
+                        checked: draft,
+                        onChange: (e) => setDraft(e.target.checked),
+                        className: 'w-4 h-4 rounded border-gray-300 text-claude-accent focus:ring-claude-accent',
+                      }),
+                      React.createElement('span', { className: 'text-sm text-claude-text' }, '草稿（不发布）')
+                    ),
+                    React.createElement('label', { className: 'flex items-center gap-2 cursor-pointer' },
+                      React.createElement('input', {
+                        type: 'checkbox',
+                        checked: featured,
+                        onChange: (e) => setFeatured(e.target.checked),
+                        className: 'w-4 h-4 rounded border-gray-300 text-claude-accent focus:ring-claude-accent',
+                      }),
+                      React.createElement('span', { className: 'text-sm text-claude-text' }, '精选文章')
+                    )
+                  )
+                ),
+
+                // 内容编辑器
+                React.createElement('div', { className: 'bg-white rounded-xl shadow-sm p-6' },
+                  React.createElement('h2', { className: 'text-lg font-semibold text-claude-text mb-4 flex items-center gap-2' },
+                    React.createElement('svg', { className: 'w-5 h-5 text-claude-accent', fill: 'none', stroke: 'currentColor', viewBox: '0 0 24 24' },
+                      React.createElement('path', { strokeLinecap: 'round', strokeLinejoin: 'round', strokeWidth: 2, d: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' })
+                    ),
+                    '文章内容 (Markdown)'
+                  ),
+                  React.createElement('textarea', {
+                    value: content,
+                    onChange: (e) => setContent(e.target.value),
+                    placeholder: '# 开始写作...\n\n支持 **Markdown** 语法',
+                    rows: 20,
+                    className: 'w-full font-mono text-sm leading-relaxed',
+                  })
+                )
+              )
+        )
+      }
+
+      // 渲染
+      if (state.view === 'login') {
+        return React.createElement(Login, {
+          onLogin: handleLogin,
+          error: state.error,
+        })
+      }
+
+      if (state.view === 'list') {
+        return React.createElement(PostList, {
+          posts: state.posts,
+          onNew: handleNew,
+          onEdit: handleEdit,
+          onDelete: handleDelete,
+        })
+      }
+
+      return React.createElement(PostEditor, {
+        initialPost: state.currentPost,
+        isNew: state.view === 'new',
+        onSave: handleSave,
+        onCancel: handleCancel,
+      })
+    }
+
+    const container = document.getElementById('admin-root')
+    if (container) {
+      const root = createRoot(container)
+      root.render(React.createElement(AdminApp))
+    }
+  })()
+</script>

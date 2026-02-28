@@ -1,0 +1,52 @@
+---
+import { getCollection } from 'astro:content'
+import TutorialLayout from '../../../layouts/Tutorial.astro'
+
+export async function getStaticPaths() {
+  const tutorials = await getCollection('tutorial-en')
+  return tutorials.map(entry => ({
+    params: { slug: entry.slug },
+    props: { entry },
+  }))
+}
+
+const { entry } = Astro.props
+const { Content } = await entry.render()
+
+const title = entry.data.title
+const description = entry.data.description
+---
+
+<TutorialLayout title={title} description={description} lang="en">
+  <div class="mb-8">
+    <div class="flex items-center gap-2 mb-4">
+      <span class={`text-xs px-2 py-1 rounded-full ${
+        entry.data.difficulty === 'beginner' ? 'bg-green-100 text-green-700' :
+        entry.data.difficulty === 'intermediate' ? 'bg-yellow-100 text-yellow-700' :
+        'bg-red-100 text-red-700'
+      }`}>
+        {entry.data.difficulty}
+      </span>
+      {entry.data.date && (
+        <span class="text-sm text-claude-text-light">
+          {entry.data.date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+        </span>
+      )}
+    </div>
+
+    <h1 class="text-3xl md:text-4xl font-bold mb-4">{title}</h1>
+    <p class="text-lg text-claude-text-light">{description}</p>
+
+    {entry.data.tags && entry.data.tags.length > 0 && (
+      <div class="flex gap-2 mt-4">
+        {entry.data.tags.map(tag => (
+          <span class="text-sm px-2 py-1 rounded bg-claude-warm text-claude-text-light">
+            #{tag}
+          </span>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <Content />
+</TutorialLayout>

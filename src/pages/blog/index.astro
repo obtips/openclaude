@@ -1,0 +1,98 @@
+---
+import Layout from '../../layouts/Layout.astro'
+import { getCollection } from 'astro:content'
+import BlogCard from '../../components/BlogCard.astro'
+
+const allPosts = await getCollection('blog', ({ data }) => data.draft !== true)
+
+// 按日期排序（最新的在前）
+const sortedPosts = [...allPosts].sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime()
+)
+
+// 精选文章
+const featuredPosts = sortedPosts.filter(post => post.data.featured)
+const regularPosts = sortedPosts.filter(post => !post.data.featured)
+
+// 获取所有分类
+const categories = [...new Set(allPosts.map(post => post.data.category))]
+---
+
+<Layout title="博客 - OpenClaude" description="OpenClaude 博客文章">
+  <div class="max-w-6xl mx-auto px-4 py-12">
+    <!-- 页面标题 -->
+    <div class="text-center mb-12">
+      <h1 class="text-4xl md:text-5xl font-bold mb-4">博客</h1>
+      <p class="text-xl text-claude-text-light">
+        分享技术见解、产品更新和社区故事
+      </p>
+    </div>
+
+    <!-- 分类和标签筛选 -->
+    <div class="mb-8 flex flex-wrap gap-4 justify-center">
+      <div class="flex flex-wrap gap-2">
+        <span class="text-sm font-medium text-claude-text-light">分类：</span>
+        {categories.map(cat => (
+          <a
+            href={`?category=${cat}`}
+            class="px-3 py-1 text-sm rounded-full bg-claude-warm hover:bg-claude-accent transition-colors"
+          >
+            {cat}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- 精选文章 -->
+    {featuredPosts.length > 0 && (
+      <section class="mb-16">
+        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+          <span class="text-2xl">⭐</span>
+          精选文章
+        </h2>
+        <div class="grid md:grid-cols-2 gap-6">
+          {featuredPosts.map(post => (
+            <BlogCard
+              title={post.data.title}
+              description={post.data.description}
+              date={post.data.date}
+              author={post.data.author}
+              tags={post.data.tags}
+              category={post.data.category}
+              slug={post.slug}
+              image={post.data.image}
+              featured={true}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- 所有文章 -->
+    <section>
+      <h2 class="text-2xl font-bold mb-6">最新文章</h2>
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {regularPosts.map(post => (
+          <BlogCard
+            title={post.data.title}
+            description={post.data.description}
+            date={post.data.date}
+            author={post.data.author}
+            tags={post.data.tags}
+            category={post.data.category}
+            slug={post.slug}
+            image={post.data.image}
+            featured={false}
+          />
+        ))}
+      </div>
+    </section>
+
+    <!-- 无文章提示 -->
+    {sortedPosts.length === 0 && (
+      <div class="text-center py-12">
+        <p class="text-claude-text-light">暂无文章，敬请期待...</p>
+      </div>
+    )}
+  </div>
+</Layout>
