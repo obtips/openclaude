@@ -27,8 +27,8 @@ export const GET: APIRoute = async ({ url }) => {
 
   try {
     // GitHub OAuth 凭据
-    const clientId = 'Ov23liyYAZ0eXDPO9eKd'
-    const clientSecret = '61561f648dcd7b16438aa04f4ce2f189712b004f'
+    const clientId = import.meta.env.GITHUB_CLIENT_ID || 'Ov23liyYAZ0eXDPO9eKd'
+    const clientSecret = import.meta.env.GITHUB_CLIENT_SECRET || '61561f648dcd7b16438aa04f4ce2f189712b004f'
 
     // 交换 access token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
@@ -77,24 +77,17 @@ export const GET: APIRoute = async ({ url }) => {
         name: userData.name || userData.login,
         avatar: userData.avatar_url,
       },
-      accessToken: tokenData.access_token,
       expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
     }
 
-    // 获取 Cloudflare bindings (通过 globalThis)
-    const env = (globalThis as any).cloudflare?.env
+    // 将用户信息编码到 cookie（暂时不使用 KV）
+    const sessionCookie = `session=${encodeURIComponent(JSON.stringify(sessionData))}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 24 * 60 * 60}`
+    const idCookie = `session_id=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 24 * 60 * 60}`
 
-    // 存储到 KV Namespace
-    if (env?.SESSIONS) {
-      await env.SESSIONS.put(sessionId, JSON.stringify(sessionData), {
-        expirationTtl: 60 * 24 * 60 * 60,
-      })
-    }
-
-    // 重定向到管理后台，设置 session cookie
+    // 重定向到管理后台
     const headers = new Headers({
-      'Location': `/admin?session=${sessionId}`,
-      'Set-Cookie': `session_id=${sessionId}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${60 * 24 * 60 * 60}`,
+      'Location': `/admin`,
+      'Set-Cookie': `${sessionCookie}\n${idCookie}`,
     })
 
     return new Response(null, { status: 302, headers })

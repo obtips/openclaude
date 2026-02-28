@@ -4,8 +4,10 @@ import type { APIRoute } from 'astro'
 export const prerender = false
 
 export const GET: APIRoute = async ({ request }) => {
-  // 从 cookie 获取 session_id
+  // 从 cookie 获取 session
   const cookieHeader = request.headers.get('cookie')
+
+  // 检查 local-session
   const sessionMatch = cookieHeader?.match(/session_id=([^;]+)/)
 
   if (!sessionMatch) {
@@ -17,7 +19,7 @@ export const GET: APIRoute = async ({ request }) => {
 
   const sessionId = sessionMatch[1]
 
-  // 本地开发环境直接返回成功
+  // 本地开发环境
   if (sessionId.startsWith('local-session-')) {
     return new Response(JSON.stringify({
       authenticated: true,
@@ -28,36 +30,28 @@ export const GET: APIRoute = async ({ request }) => {
     })
   }
 
-  // 生产环境从 KV 读取 session
-  const env = (globalThis as any).cloudflare?.env
+  // 从 session cookie 获取用户数据
+  const sessionDataMatch = cookieHeader?.match(/session=([^;]+)/)
 
-  if (env?.SESSIONS) {
+  if (sessionDataMatch) {
     try {
-      const sessionData = await env.SESSIONS.get(sessionId, 'json')
+      const sessionData = JSON.parse(decodeURIComponent(sessionDataMatch[1]))
 
-      if (!sessionData) {
-        return new Response(JSON.stringify({ authenticated: false }), {
-          status: 401,
+      // 检查是否过期
+      if (sessionData.expiresAt && sessionData.expiresAt > Date.now()) {
+        return new Response(JSON.stringify({
+          authenticated: true,
+          user: sessionData.user,
+        }), {
+          status: 200,
           headers: { 'Content-Type': 'application/json' },
         })
       }
-
-      return new Response(JSON.stringify({
-        authenticated: true,
-        user: (sessionData as any).user,
-      }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      })
-    } catch (err) {
-      return new Response(JSON.stringify({ authenticated: false }), {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      })
+    } catch (e) {
+      // 解析失败，返回未认证
     }
   }
 
-  // 没有 KV 绑定，返回未认证
   return new Response(JSON.stringify({ authenticated: false }), {
     status: 401,
     headers: { 'Content-Type': 'application/json' },
