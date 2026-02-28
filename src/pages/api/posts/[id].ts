@@ -1,7 +1,8 @@
 // 本地开发 API - 单篇文章操作
-import type { APIRoute } from 'astro'
 
 export const prerender = false
+import type { APIRoute } from 'astro'
+
 
 export const GET: APIRoute = async ({ params, request }) => {
   const session = await verifySession(request)
