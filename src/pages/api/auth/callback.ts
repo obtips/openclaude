@@ -69,7 +69,7 @@ export const GET: APIRoute = async ({ url }) => {
 
     const userData = await userResponse.json()
 
-    // 创建 session（注意：需要配置 KV Namespace 才能持久化）
+    // 创建 session
     const sessionId = crypto.randomUUID()
     const sessionData = {
       user: {
@@ -81,10 +81,15 @@ export const GET: APIRoute = async ({ url }) => {
       expiresAt: Date.now() + 60 * 24 * 60 * 60 * 1000,
     }
 
-    // TODO: 存储到 KV Namespace (需要在 Cloudflare Pages 配置)
-    // await env.SESSIONS.put(sessionId, JSON.stringify(sessionData), {
-    //   expirationTtl: 60 * 24 * 60 * 60,
-    // })
+    // 获取 Cloudflare bindings (通过 globalThis)
+    const env = (globalThis as any).cloudflare?.env
+
+    // 存储到 KV Namespace
+    if (env?.SESSIONS) {
+      await env.SESSIONS.put(sessionId, JSON.stringify(sessionData), {
+        expirationTtl: 60 * 24 * 60 * 60,
+      })
+    }
 
     // 重定向到管理后台，设置 session cookie
     const headers = new Headers({

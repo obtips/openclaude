@@ -38,15 +38,37 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
 
       const checkLogin = async () => {
         try {
-          const response = await fetch(`${API_BASE}/posts`)
+          const response = await fetch(`${API_BASE}/auth/session`)
           if (response.ok) {
-            const posts = await response.json()
-            setState({ view: 'list', posts, tutorials: [], contentType: 'blog', error: '' })
+            const sessionData = await response.json()
+            setState({
+              view: 'list',
+              posts: [],
+              tutorials: [],
+              contentType: 'blog',
+              error: '',
+              user: sessionData.user
+            })
+            // 同时加载文章列表
+            loadPosts()
           } else if (response.status === 401) {
             setState({ ...initialState, view: 'login' })
           }
         } catch (e) {
           console.error('Auth check failed:', e)
+          setState({ ...initialState, view: 'login' })
+        }
+      }
+
+      const loadPosts = async () => {
+        try {
+          const response = await fetch(`${API_BASE}/posts`)
+          if (response.ok) {
+            const posts = await response.json()
+            setState(prev => ({ ...prev, posts }))
+          }
+        } catch (e) {
+          console.error('Load posts failed:', e)
         }
       }
 
