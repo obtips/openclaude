@@ -11,7 +11,13 @@ export default {
       applyBaseStyles: false,
     }),
   ],
-  adapter: cloudflare(),
+  adapter: cloudflare({
+    // 排除 /api/* 和 /auth/* 路由，让 Cloudflare Functions 处理
+    routes: {
+      include: ['/*'],
+      exclude: ['/api/*', '/auth/*'],
+    },
+  }),
   vite: {
     build: {
       rollupOptions: {
