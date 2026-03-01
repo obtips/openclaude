@@ -76,10 +76,13 @@ export const onRequestPut = async (context: any) => {
         })
     }
 
+    let step = 'init'
     try {
+        step = 'request.json()'
         const body = await request.json()
         const { content, sha, enableEnglish } = body
 
+        step = 'github-put'
         const fileContent = content || JSON.stringify({ enableEnglish }, null, 2) + '\n'
 
         const response = await fetch(
@@ -100,6 +103,7 @@ export const onRequestPut = async (context: any) => {
             }
         )
 
+        step = 'response-check'
         if (!response.ok) {
             const errorText = await response.text()
             let errorMessage = errorText
@@ -113,12 +117,13 @@ export const onRequestPut = async (context: any) => {
             })
         }
 
+        step = 'response.json()'
         const data = await response.json()
         return new Response(JSON.stringify({ success: true, sha: data.content.sha }), {
             headers: { 'Content-Type': 'application/json' }
         })
     } catch (e: any) {
-        return new Response(JSON.stringify({ error: e.message }), {
+        return new Response(JSON.stringify({ error: `[${step}] ${e.message}`, stack: e.stack }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         })
