@@ -1,7 +1,12 @@
 ---
-title: "About OpenClaude"
-description: "Building a blazing-fast, minimal, and beautiful modern documentation and blog framework."
+title: 'About OpenClaude'
+description: 'Building a blazing-fast, minimal, and beautiful modern documentation and blog framework.'
+date: 2026-03-01T12:43:40.372Z
+author: 'OpenClaude Team'
+tags: []
+category: '技术'
 ---
+
 
 ## Our Mission
 OpenClaude is an open-source static site generation system, designed for developers and writers who demand top-tier performance with a clean, minimal aesthetic. Built on the powerful Astro framework and TailwindCSS, it features a fully integrated GitHub API-powered content management system.
@@ -12,5 +17,3 @@ OpenClaude is an open-source static site generation system, designed for develop
 - **Edit Anywhere**: Log into the built-in admin panel from anywhere and sync changes in real-time via GitHub.
 - **SEO Friendly**: Native SSR with automatic metadata generation makes search engine indexing effortless.
 
-## Contact
-If you're interested in this project or want to contribute, feel free to open an Issue or PR on our [GitHub Repository](https://github.com/obtips/openclaude)!
