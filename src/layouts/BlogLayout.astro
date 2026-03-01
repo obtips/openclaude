@@ -10,6 +10,7 @@ interface Props {
   tags?: string[]
   category?: string
   image?: string
+  lang?: string
 }
 
 const {
@@ -19,11 +20,17 @@ const {
   author = 'OpenClaude Team',
   tags = [],
   category = '技术',
-  image
+  image,
+  lang = 'zh'
 } = Astro.props
+
+const dateLocale = lang === 'en' ? 'en-US' : 'zh-CN'
+const thankText = lang === 'en' ? 'Thanks for reading! Feel free to leave a comment below.' : '感谢阅读！欢迎在下方留言讨论'
+const backText = lang === 'en' ? '← Back to Blog' : '返回博客列表'
+const backHref = lang === 'en' ? '/en/blog/' : '/blog/'
 ---
 
-<Layout title={title} description={description}>
+<Layout title={title} description={description} lang={lang}>
   <article class="max-w-3xl mx-auto px-4 py-12">
     <!-- 文章头部 -->
     <header class="mb-10">
@@ -60,7 +67,7 @@ const {
         <span class="font-medium">{author}</span>
         <span>·</span>
         <time datetime={date?.toISOString()}>
-          {date?.toLocaleDateString('zh-CN', {
+          {date?.toLocaleDateString(dateLocale, {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
@@ -88,9 +95,7 @@ const {
     <!-- 文章底部 -->
     <footer class="mt-12 pt-8 border-t border-claude-border">
       <div class="text-center text-claude-text-light">
-        <p>
-          感谢阅读！欢迎在下方留言讨论
-        </p>
+        <p>{thankText}</p>
       </div>
     </footer>
 
@@ -103,13 +108,13 @@ const {
   <!-- 返回按钮 -->
   <div class="max-w-3xl mx-auto px-4 pb-12">
     <a
-      href="/blog/"
+      href={backHref}
       class="inline-flex items-center gap-2 text-claude-accent hover:underline"
     >
       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
-      返回博客列表
+      {backText}
     </a>
   </div>
 </Layout>

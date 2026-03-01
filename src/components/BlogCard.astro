@@ -67,7 +67,7 @@ const langPrefix = lang === 'en' ? '/en' : ''
 
       <!-- 元信息 -->
       <div class="flex items-center gap-4 text-sm text-claude-text-light">
-        <span>{date.toLocaleDateString('zh-CN')}</span>
+        <span>{date.toLocaleDateString(lang === 'en' ? 'en-US' : 'zh-CN')}</span>
         <span>·</span>
         <span>{author}</span>
       </div>
