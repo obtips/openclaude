@@ -58,6 +58,7 @@ const categories = [...new Set(allPosts.map(post => post.data.category))]
               slug={post.slug}
               image={post.data.image}
               featured={true}
+              lang="en"
             />
           ))}
         </div>
@@ -78,7 +79,8 @@ const categories = [...new Set(allPosts.map(post => post.data.category))]
             slug={post.slug}
             image={post.data.image}
             featured={false}
-          />
+              lang="en"
+            />
         ))}
       </div>
     </section>

@@ -9,6 +9,7 @@ interface Props {
   slug: string
   image?: string
   featured?: boolean
+  lang?: string
 }
 
 const {
@@ -20,11 +21,14 @@ const {
   category,
   slug,
   image,
-  featured = false
+  featured = false,
+  lang = 'zh'
 } = Astro.props
+
+const langPrefix = lang === 'en' ? '/en' : ''
 ---
 
-<a href={`/blog/${slug}/`} class="group">
+<a href={`${langPrefix}/blog/${slug}/`} class="group">
   <article class={`card h-full flex flex-col overflow-hidden ${
     featured ? 'md:col-span-2' : ''
   }`}>

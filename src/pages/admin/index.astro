@@ -274,6 +274,19 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                   }
                 }, '教程'),
                 React.createElement('button', {
+                  onClick: () => switchContentType('tutorial-en'),
+                  style: {
+                    padding: '8px 16px',
+                    background: state.contentType === 'tutorial-en' ? '#D4A574' : 'white',
+                    color: state.contentType === 'tutorial-en' ? 'white' : '#374151',
+                    border: state.contentType === 'tutorial-en' ? 'none' : '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }
+                }, '教程(EN)'),
+                React.createElement('button', {
                   onClick: () => switchContentType('pages'),
                   style: {
                     padding: '8px 16px',
@@ -366,7 +379,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                       ),
                       React.createElement('td', { style: { padding: '16px 20px', textAlign: 'right' } },
                         React.createElement('a', {
-                          href: (post.contentType || state.contentType) === 'blog' ? `/blog/${post.slug}` : (post.contentType || state.contentType) === 'pages' ? `/${post.slug}/` : `/tutorial/${post.slug}`,
+                          href: (() => { const t = post.contentType || state.contentType; if (t === 'blog') return `/blog/${post.slug}`; if (t === 'pages') return `/${post.slug}/`; if (t === 'tutorial-en') return `/en/tutorial/${post.slug}`; return `/tutorial/${post.slug}`; })(),
                           target: '_blank',
                           style: { padding: '6px 14px', background: 'transparent', border: 'none', color: '#6B7280', fontSize: '14px', cursor: 'pointer', borderRadius: '6px', marginRight: '4px', textDecoration: 'none' }
                         }, '查看'),
