@@ -3,12 +3,13 @@ title: 'Guide for Claude API'
 description: 'an intro'
 date: 2026-03-01T12:00:49.255Z
 author: 'OpenClaude Team'
-tags: []
-category: '技术'
+tags: ['api', '入门', '基础']
+category: '教程'
 draft: false
 
 
 ---
+
 
 
 # Claude API 入门
