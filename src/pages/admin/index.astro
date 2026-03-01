@@ -266,19 +266,43 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
               React.createElement('button', {
                 onClick: async () => {
                   const newVal = !state.enableEnglish;
+                  const oldVal = state.enableEnglish;
+                  
+                  // 1. Optimistic UI update
                   setState(prev => ({ ...prev, enableEnglish: newVal }));
                   try { localStorage.setItem('oc_enableEnglish', JSON.stringify(newVal)); } catch {}
+                  
                   try {
-                    const getRes = await fetch('/api/posts/settings?type=pages', { headers: { 'Cache-Control': 'no-cache' } });
+                    // 2. Fetch current file SHA
+                    const getRes = await fetchWithAuth('/api/posts/settings?type=pages', { headers: { 'Cache-Control': 'no-store' } });
                     const getData = await getRes.json();
-                    const sha = getData.sha || '';
+                    const sha = getData.sha;
+                    
+                    if (!sha) {
+                      throw new Error('获取 settings.json 的 SHA 失败');
+                    }
+                    
+                    // 3. Update file
                     const content = JSON.stringify({ enableEnglish: newVal }, null, 2) + '\n';
-                    await fetch('/api/posts/settings', {
+                    const putRes = await fetchWithAuth('/api/posts/settings', {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ content, sha, enableEnglish: newVal })
                     });
-                  } catch(e) { console.error('Toggle failed:', e); }
+                    
+                    if (!putRes.ok) {
+                      const errData = await putRes.json();
+                      throw new Error(errData.error || '保存设置失败');
+                    }
+                    
+                    // console.log('Successfully toggled English mode to:', newVal);
+                  } catch(e) { 
+                    console.error('Toggle failed:', e); 
+                    alert('切换失败: ' + e.message + '。状态已恢复，请刷新页面重试。');
+                    // 4. Revert state on failure
+                    setState(prev => ({ ...prev, enableEnglish: oldVal }));
+                    try { localStorage.setItem('oc_enableEnglish', JSON.stringify(oldVal)); } catch {}
+                  }
                 },
                 style: {
                   padding: '6px 12px',
