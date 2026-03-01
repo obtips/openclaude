@@ -40,24 +40,24 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
 
       // 检查登录状态
       React.useEffect(() => {
-        checkLogin()
+        checkLogin(true)
       }, [])
 
-      const checkLogin = async () => {
+      const checkLogin = async (isInitialCheck = false) => {
         try {
           const response = await fetchWithAuth(`${API_BASE}/auth/session`)
           if (response.ok) {
             const sessionData = await response.json()
-            setState({
-              view: 'list',
-              posts: [],
-              tutorials: [],
-              contentType: 'blog',
+            setState(prev => ({
+              ...prev,
+              view: isInitialCheck ? 'list' : prev.view,
               error: '',
               user: sessionData.user
-            })
-            // 同时加载文章列表
-            loadPosts()
+            }))
+            // 如果是初始检查或没有文章才加载文章列表
+            if (isInitialCheck) {
+              loadPosts()
+            }
           } else if (response.status === 401) {
             setState({ ...initialState, view: 'login' })
           }
@@ -129,14 +129,16 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
           })
 
           if (response.ok) {
-            await checkLogin()
+            await checkLogin(false)
+            await loadPosts() // 保存成功后重新拉取新鲜列表
+            setState(prev => ({ ...prev, view: 'list' }))
             return true
           } else {
-            setState({ ...state, error: '保存失败' })
+            setState(prev => ({ ...prev, error: '保存失败' }))
             return false
           }
         } catch (e) {
-          setState({ ...state, error: '保存失败' })
+          setState(prev => ({ ...prev, error: '保存失败' }))
           return false
         }
       }
@@ -173,7 +175,6 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
       // 登录组件
       const Login = () => {
         const isProduction = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
-        const loginText = isProduction ? 'GitHub 登录' : '本地开发登录'
 
         return React.createElement('div', {
           style: { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px', background: '#F5F1E8' }
@@ -185,10 +186,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
             ),
 
             React.createElement('div', { style: { background: 'white', borderRadius: '16px', padding: '32px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' } },
-              React.createElement('div', { style: { marginBottom: '24px', textAlign: 'center', padding: '20px', background: '#F9FAFB', borderRadius: '8px' } },
-                React.createElement('p', { style: { fontSize: '14px', color: '#374151', marginBottom: '12px' } },
-                  loginText
-                ),
+              React.createElement('div', { style: { textAlign: 'center' } },
                 React.createElement('button', {
                   onClick: handleLogin,
                   style: {
