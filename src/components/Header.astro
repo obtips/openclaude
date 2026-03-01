@@ -76,6 +76,7 @@ const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
         href={switchPath}
         class="hidden items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-claude-border hover:bg-claude-warm transition-colors text-sm"
         title={lang === 'zh' ? 'Switch to English' : '切换到中文'}
+        style="display: none;"
       >
         <span>🌐</span>
         <span>{lang === 'zh' ? 'EN' : '中文'}</span>
@@ -84,7 +85,7 @@ const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
   </div>
 </header>
 
-<script>
+<script is:inline>
   // 客户端动态检查英文版开关状态
   (() => {
     const el = document.getElementById('lang-switch');
@@ -92,9 +93,11 @@ const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
 
     const showButton = (show: boolean) => {
       if (show) {
+        el.style.display = '';
         el.classList.remove('hidden');
         el.classList.add('flex');
       } else {
+        el.style.display = 'none';
         el.classList.add('hidden');
         el.classList.remove('flex');
       }
