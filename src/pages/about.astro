@@ -1,15 +1,18 @@
 ---
-import Layout from '../components/Layout.astro';
-import PageHeader from '../components/PageHeader.astro';
+import Layout from '../layouts/Layout.astro';
 
 export const prerender = true;
 ---
 
 <Layout title="关于 OpenClaude" description="了解 OpenClaude 项目愿景和开发团队">
-  <PageHeader 
-    title="关于 OpenClaude" 
-    description="致力于打造极速、极简、极美的现代化文档与博客框架。"
-  />
+  <div class="bg-claude-warm py-12 md:py-20">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <h1 class="text-4xl md:text-5xl font-bold text-claude-text mb-6">关于 OpenClaude</h1>
+      <p class="text-xl text-claude-text-light max-w-2xl mx-auto">
+        致力于打造极速、极简、极美的现代化文档与博客框架。
+      </p>
+    </div>
+  </div>
   
   <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
     <div class="prose prose-lg max-w-none text-gray-700">
