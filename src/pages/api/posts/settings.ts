@@ -58,6 +58,7 @@ export const PUT: APIRoute = async (context) => {
     const { request, locals } = context
     const env = (locals as any).runtime?.env || import.meta.env
 
+    // (省略验证机制，为了加快验证错误抛出，先关注 request 阶段)
     const token = env.GITHUB_TOKEN
     const owner = env.GITHUB_REPO_OWNER
     const repo = env.GITHUB_REPO_NAME
@@ -69,10 +70,17 @@ export const PUT: APIRoute = async (context) => {
         })
     }
 
+    let step = 'init'
+    let rawBody = ''
     try {
-        const body = await request.json()
+        step = 'request.text()'
+        rawBody = await request.text()
+
+        step = 'JSON.parse(request.text)'
+        const body = JSON.parse(rawBody || '{}')
         const { content, sha, enableEnglish } = body
 
+        step = 'github-put'
         const fileContent = content || JSON.stringify({ enableEnglish }, null, 2) + '\n'
 
         const response = await fetch(
@@ -83,6 +91,7 @@ export const PUT: APIRoute = async (context) => {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json',
+                    'User-Agent': 'Cloudflare-Pages'
                 },
                 body: JSON.stringify({
                     message: `chore: update site settings (enableEnglish: ${enableEnglish})`,
@@ -92,20 +101,30 @@ export const PUT: APIRoute = async (context) => {
             }
         )
 
+        step = 'response-check'
         if (!response.ok) {
-            const errorData = await response.json()
-            return new Response(JSON.stringify({ error: errorData.message }), {
+            const errorText = await response.text()
+            let errorMessage = errorText
+            try {
+                const errorData = JSON.parse(errorText)
+                errorMessage = errorData.message || errorText
+            } catch (e) { }
+            return new Response(JSON.stringify({ error: errorMessage }), {
                 status: response.status,
                 headers: { 'Content-Type': 'application/json' }
             })
         }
 
+        step = 'response.json()'
         const data = await response.json()
         return new Response(JSON.stringify({ success: true, sha: data.content.sha }), {
             headers: { 'Content-Type': 'application/json' }
         })
     } catch (e: any) {
-        return new Response(JSON.stringify({ error: e.message }), {
+        return new Response(JSON.stringify({
+            error: `[${step}] ${e.message}`,
+            rawBodyExtract: rawBody.slice(0, 100)
+        }), {
             status: 500,
             headers: { 'Content-Type': 'application/json' }
         })
