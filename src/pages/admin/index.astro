@@ -366,7 +366,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                       ),
                       React.createElement('td', { style: { padding: '16px 20px', textAlign: 'right' } },
                         React.createElement('a', {
-                          href: state.contentType === 'blog' ? `/blog/${post.slug}` : `/tutorial/${post.slug}`,
+                          href: (post.contentType || state.contentType) === 'blog' ? `/blog/${post.slug}` : (post.contentType || state.contentType) === 'pages' ? `/${post.slug}/` : `/tutorial/${post.slug}`,
                           target: '_blank',
                           style: { padding: '6px 14px', background: 'transparent', border: 'none', color: '#6B7280', fontSize: '14px', cursor: 'pointer', borderRadius: '6px', marginRight: '4px', textDecoration: 'none' }
                         }, '查看'),
