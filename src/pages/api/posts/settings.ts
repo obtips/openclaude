@@ -35,11 +35,17 @@ export const GET: APIRoute = async ({ request }) => {
         const settings = JSON.parse(content)
 
         return new Response(JSON.stringify({ ...settings, sha: data.sha }), {
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-store, no-cache, must-revalidate'
+            }
         })
     } catch {
         return new Response(JSON.stringify({ enableEnglish: true }), {
-            headers: { 'Content-Type': 'application/json' }
+            headers: {
+                'Content-Type': 'application/json',
+                'Cache-Control': 'no-store, no-cache, must-revalidate'
+            }
         })
     }
 }
