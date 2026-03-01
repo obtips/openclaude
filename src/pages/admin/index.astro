@@ -287,8 +287,13 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                     });
                     
                     if (!putRes.ok) {
-                      const errData = await putRes.json();
-                      throw new Error(errData.error || '保存设置失败');
+                      const errText = await putRes.text();
+                      let errMsg = errText;
+                      try {
+                        const errData = JSON.parse(errText);
+                        errMsg = errData.error || errData.message || errText;
+                      } catch(e) {}
+                      throw new Error(errMsg);
                     }
                     
                     // console.log('Successfully toggled English mode to:', newVal);
