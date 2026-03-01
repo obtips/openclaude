@@ -74,9 +74,8 @@ const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
       <a
         id="lang-switch"
         href={switchPath}
-        class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-claude-border hover:bg-claude-warm transition-colors text-sm"
+        class="hidden items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-claude-border hover:bg-claude-warm transition-colors text-sm"
         title={lang === 'zh' ? 'Switch to English' : '切换到中文'}
-        style="display:none;"
       >
         <span>🌐</span>
         <span>{lang === 'zh' ? 'EN' : '中文'}</span>
@@ -91,11 +90,16 @@ const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
     const el = document.getElementById('lang-switch');
     if (!el) return;
 
+    const showButton = () => {
+      el.classList.remove('hidden');
+      el.classList.add('flex');
+    };
+
     // 优先从 localStorage 读取（即时生效）
     try {
       const cached = localStorage.getItem('oc_enableEnglish');
       if (cached !== null) {
-        if (JSON.parse(cached) !== false) el.style.display = '';
+        if (JSON.parse(cached) !== false) showButton();
         return; // localStorage 有值，直接使用，不再请求 API
       }
     } catch {}
@@ -105,8 +109,8 @@ const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
       .then(r => r.ok ? r.json() : { enableEnglish: true })
       .then(data => {
         try { localStorage.setItem('oc_enableEnglish', JSON.stringify(data.enableEnglish !== false)); } catch {}
-        if (data.enableEnglish !== false) el.style.display = '';
+        if (data.enableEnglish !== false) showButton();
       })
-      .catch(() => { el.style.display = ''; });
+      .catch(() => { showButton(); });
   })();
 </script>
