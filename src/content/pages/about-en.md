@@ -11,6 +11,7 @@ draft: false
 ---
 
 
+
 ## Our Mission
 OpenClaude is an open-source static site generation system, designed for developers and writers who demand top-tier performance with a clean, minimal aesthetic. Built on the powerful Astro framework and TailwindCSS, it features a fully integrated GitHub API-powered content management system.
 
