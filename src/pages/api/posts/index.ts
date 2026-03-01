@@ -111,10 +111,11 @@ async function getAllPostsFromGitHub(env: any) {
     throw new Error('Missing GitHub env vars: GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME')
   }
 
-  const contentTypes = ['blog', 'tutorial']
+  const contentTypes = ['blog', 'tutorial', 'pages']
   const allPosts: any[] = []
 
-  for (const type of contentTypes) {
+  // 并发获取各个 content 类型的目录列表
+  const typePromises = contentTypes.map(async (type) => {
     const response = await fetch(
       `https://api.github.com/repos/${owner}/${repo}/contents/src/content/${type}?t=${Date.now()}`,
       {
@@ -128,14 +129,16 @@ async function getAllPostsFromGitHub(env: any) {
       }
     )
 
-    if (!response.ok) continue
+    if (!response.ok) return []
 
     const data = await response.json()
-    if (!Array.isArray(data)) continue
+    if (!Array.isArray(data)) return []
 
-    for (const file of data) {
-      if (file.type !== 'file' || !file.name.endsWith('.md')) continue
+    // 筛选出 Markdown 文件
+    const files = data.filter((file: any) => file.type === 'file' && file.name.endsWith('.md'))
 
+    // 并发拉取对应 Markdown 文件的具体内容
+    const filePromises = files.map(async (file: any) => {
       const fileResponse = await fetch(`${file.url}&t=${Date.now()}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -146,28 +149,39 @@ async function getAllPostsFromGitHub(env: any) {
         },
       })
 
-      if (!fileResponse.ok) continue
+      if (!fileResponse.ok) return null
 
       const content = await fileResponse.text()
-      const { frontmatter, markdown } = parseMarkdown(content)
+      try {
+        const { frontmatter, markdown } = parseMarkdown(content)
+        const slug = file.name.replace(/\.md$/, '')
+        return {
+          slug,
+          title: (frontmatter as any).title || file.name,
+          description: (frontmatter as any).description || '',
+          date: (frontmatter as any).date || new Date().toISOString(),
+          author: (frontmatter as any).author || 'OpenClaude Team',
+          tags: (frontmatter as any).tags || [],
+          category: (frontmatter as any).category || '技术',
+          draft: (frontmatter as any).draft || false,
+          featured: (frontmatter as any).featured || false,
+          image: (frontmatter as any).image,
+          content: markdown,
+          sha: file.sha,
+          contentType: type,
+        }
+      } catch (e) {
+        return null
+      }
+    })
 
-      allPosts.push({
-        slug: file.name.replace('.md', ''),
-        title: (frontmatter as any).title || file.name,
-        description: (frontmatter as any).description || '',
-        date: (frontmatter as any).date || new Date().toISOString(),
-        author: (frontmatter as any).author || 'OpenClaude Team',
-        tags: (frontmatter as any).tags || [],
-        category: (frontmatter as any).category || '技术',
-        draft: (frontmatter as any).draft || false,
-        featured: (frontmatter as any).featured || false,
-        image: (frontmatter as any).image,
-        content: markdown,
-        sha: file.sha,
-        contentType: type,
-      })
-    }
-  }
+    const parsedFiles = await Promise.all(filePromises)
+    return parsedFiles.filter(Boolean)
+  })
+
+  const results = await Promise.all(typePromises)
+  // 将所有结果打平装入 allPosts
+  results.forEach(posts => allPosts.push(...posts))
 
   return allPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }

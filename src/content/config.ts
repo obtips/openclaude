@@ -35,8 +35,19 @@ const tutorialEn = defineCollection({
   schema: tutorialSchema,
 })
 
+const pageSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  date: z.coerce.date().optional(),
+})
+
+const pages = defineCollection({
+  schema: pageSchema,
+})
+
 export const collections = {
   blog,
   tutorial,
   'tutorial-en': tutorialEn,
+  pages,
 }

@@ -154,10 +154,10 @@ async function getPost(request: Request, env: any, slug: string) {
   if (isLocalDev(request)) {
     return getPostFromFS(slug)
   }
-  return getPostFromGitHub(env, slug)
+  return getPostFromGitHub(env, slug, request)
 }
 
-async function getPostFromGitHub(env: any, slug: string) {
+async function getPostFromGitHub(env: any, slug: string, request: Request) {
   const token = env?.GITHUB_TOKEN || import.meta.env.GITHUB_TOKEN
   const owner = env?.GITHUB_REPO_OWNER || import.meta.env.GITHUB_REPO_OWNER
   const repo = env?.GITHUB_REPO_NAME || import.meta.env.GITHUB_REPO_NAME
@@ -166,8 +166,11 @@ async function getPostFromGitHub(env: any, slug: string) {
     throw new Error('Missing GitHub env vars')
   }
 
+  const urlObj = new URL(request.url)
+  const type = urlObj.searchParams.get('type') || 'blog'
+
   const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/contents/src/content/blog/${slug}.md?t=${Date.now()}`,
+    `https://api.github.com/repos/${owner}/${repo}/contents/src/content/${type}/${slug}.md?t=${Date.now()}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -256,6 +259,7 @@ async function updatePostToGitHub(env: any, slug: string, body: any) {
   }
 
   const targetSlug = newSlug || slug
+  const targetType = body.contentType || 'blog'
   const frontmatter = generateFrontmatter({
     title, description, date: body.date || new Date().toISOString(),
     author: author || 'OpenClaude Team',
@@ -267,7 +271,7 @@ async function updatePostToGitHub(env: any, slug: string, body: any) {
   const contentBase64 = btoa(unescape(encodeURIComponent(fullContent)))
 
   const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/contents/src/content/blog/${targetSlug}.md`,
+    `https://api.github.com/repos/${owner}/${repo}/contents/src/content/${targetType}/${targetSlug}.md`,
     {
       method: 'PUT',
       headers: {
@@ -319,13 +323,16 @@ async function updatePostToFS(slug: string, body: any) {
 // ==========================================
 
 async function deletePost(request: Request, env: any, slug: string, sha?: string) {
+  const urlObj = new URL(request.url)
+  const type = urlObj.searchParams.get('type') || 'blog'
+
   if (isLocalDev(request)) {
-    return deletePostFromFS(slug)
+    return deletePostFromFS(slug, type)
   }
-  return deletePostFromGitHub(env, slug, sha)
+  return deletePostFromGitHub(env, slug, sha, type)
 }
 
-async function deletePostFromGitHub(env: any, slug: string, sha?: string) {
+async function deletePostFromGitHub(env: any, slug: string, sha?: string, type: string = 'blog') {
   const token = env?.GITHUB_TOKEN || import.meta.env.GITHUB_TOKEN
   const owner = env?.GITHUB_REPO_OWNER || import.meta.env.GITHUB_REPO_OWNER
   const repo = env?.GITHUB_REPO_NAME || import.meta.env.GITHUB_REPO_NAME
@@ -335,7 +342,7 @@ async function deletePostFromGitHub(env: any, slug: string, sha?: string) {
   }
 
   const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/contents/src/content/blog/${slug}.md`,
+    `https://api.github.com/repos/${owner}/${repo}/contents/src/content/${type}/${slug}.md`,
     {
       method: 'DELETE',
       headers: {
@@ -356,10 +363,10 @@ async function deletePostFromGitHub(env: any, slug: string, sha?: string) {
   }
 }
 
-async function deletePostFromFS(slug: string) {
+async function deletePostFromFS(slug: string, type: string = 'blog') {
   const fs = await import('fs/promises')
   const path = await import('path')
-  const filepath = path.join(process.cwd(), 'src', 'content', 'blog', `${slug}.md`)
+  const filepath = path.join(process.cwd(), 'src', 'content', type, `${slug}.md`)
 
   await fs.unlink(filepath)
 }

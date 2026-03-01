@@ -106,13 +106,14 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
 
       const handleEdit = async (slug) => {
         try {
-          const response = await fetchWithAuth(`${API_BASE}/posts/${slug}`)
+          const listPost = state.posts.find(p => p.slug === slug) || state.tutorials.find(p => p.slug === slug)
+          const typeParam = listPost?.contentType ? `?type=${listPost.contentType}` : ''
+          const response = await fetchWithAuth(`${API_BASE}/posts/${slug}${typeParam}`)
           if (response.ok) {
             const post = await response.json()
             // IMPORTANT: GitHub single file `.raw` fetch DOES NOT return `sha`.
             // We must merge the `sha` that was fetched from the list endpoint!
-            const listPost = state.posts.find(p => p.slug === slug) || state.tutorials.find(p => p.slug === slug)
-            setState({ ...state, view: 'edit', currentPost: { ...post, sha: listPost?.sha } })
+            setState({ ...state, view: 'edit', currentPost: { ...post, sha: listPost?.sha, contentType: listPost?.contentType } })
           }
         } catch (e) {
           setState({ ...state, error: '加载文章失败' })
@@ -122,13 +123,14 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
       const handleSave = async (post) => {
         const isNew = state.view === 'new'
         const slug = isNew ? post.slug : state.currentPost?.slug
+        const targetType = post.contentType || state.contentType || 'blog'
 
         try {
-          const url = `${API_BASE}/posts${isNew ? '' : '/' + slug}`
+          const url = `${API_BASE}/posts${isNew ? '' : '/' + slug}?type=${targetType}`
           const response = await fetchWithAuth(url, {
             method: isNew ? 'POST' : 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...post, sha: state.currentPost?.sha }),
+            body: JSON.stringify({ ...post, contentType: targetType, sha: state.currentPost?.sha }),
           })
 
           if (response.ok) {
@@ -146,9 +148,10 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
         }
       }
 
-      const handleDelete = async (slug, sha) => {
+      const handleDelete = async (slug, sha, contentType) => {
         try {
-          const response = await fetchWithAuth(`${API_BASE}/posts/${slug}`, {
+          const typeParam = contentType ? `?type=${contentType}` : ''
+          const response = await fetchWithAuth(`${API_BASE}/posts/${slug}${typeParam}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sha }),
@@ -269,7 +272,20 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                     fontWeight: '500',
                     cursor: 'pointer',
                   }
-                }, '教程')
+                }, '教程'),
+                React.createElement('button', {
+                  onClick: () => switchContentType('pages'),
+                  style: {
+                    padding: '8px 16px',
+                    background: state.contentType === 'pages' ? '#D4A574' : 'white',
+                    color: state.contentType === 'pages' ? 'white' : '#374151',
+                    border: state.contentType === 'pages' ? 'none' : '1px solid #E5E7EB',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }
+                }, '单页')
               )
             ),
             React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '12px' } },
@@ -359,7 +375,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                           style: { padding: '6px 14px', background: 'transparent', border: 'none', color: '#D4A574', fontSize: '14px', fontWeight: '500', cursor: 'pointer', borderRadius: '6px' }
                         }, '编辑'),
                         React.createElement('button', {
-                          onClick: () => post.sha && onDelete(post.slug, post.sha),
+                          onClick: () => post.sha && onDelete(post.slug, post.sha, post.contentType),
                           style: { padding: '6px 14px', background: 'transparent', border: 'none', color: deleteConfirm === post.slug ? '#DC2626' : '#9CA3AF', fontSize: '14px', cursor: 'pointer', borderRadius: '6px', marginLeft: '8px' }
                         }, deleteConfirm === post.slug ? '确认?' : '删除')
                       )
