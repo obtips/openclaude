@@ -23,12 +23,14 @@ export const GET: APIRoute = async (context) => {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/vnd.github.v3+json',
                     'Cache-Control': 'no-cache',
+                    'User-Agent': 'Cloudflare-Pages'
                 },
             }
         )
 
         if (!response.ok) {
-            return new Response(JSON.stringify({ enableEnglish: false }), {
+            const errText = await response.text()
+            return new Response(JSON.stringify({ enableEnglish: false, _debug: errText, _status: response.status }), {
                 headers: { 'Content-Type': 'application/json' }
             })
         }
