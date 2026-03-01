@@ -1,3 +1,5 @@
+import { verifySession } from '../../../lib/auth-cloudflare'
+
 // GET: 获取 settings.json
 export const onRequestGet = async (context: any) => {
     const { request, env } = context
@@ -11,7 +13,7 @@ export const onRequestGet = async (context: any) => {
             headers: { 'Content-Type': 'application/json' }
         })
     }
-
+    // ... remaining GET code
     try {
         const response = await fetch(
             `https://api.github.com/repos/${owner}/${repo}/contents/src/content/pages/settings.json?t=${Date.now()}`,
@@ -54,6 +56,14 @@ export const onRequestGet = async (context: any) => {
 // PUT: 更新 settings.json
 export const onRequestPut = async (context: any) => {
     const { request, env } = context
+
+    const session = await verifySession(request, env)
+    if (!session) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+            status: 401,
+            headers: { 'Content-Type': 'application/json' },
+        })
+    }
 
     const token = env.GITHUB_TOKEN
     const owner = env.GITHUB_REPO_OWNER
