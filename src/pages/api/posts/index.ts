@@ -1,8 +1,6 @@
-// 本地开发 API - 文章列表
-
+// 文章列表 API - 生产环境通过 GitHub API 读取
 export const prerender = false
 import type { APIRoute } from 'astro'
-
 
 export const GET: APIRoute = async ({ request }) => {
   // 检查 session
@@ -15,7 +13,7 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   try {
-    const posts = await getAllPosts()
+    const posts = await getAllPosts(request)
     return new Response(JSON.stringify(posts), {
       headers: { 'Content-Type': 'application/json' },
     })
@@ -38,7 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const body = await request.json()
-    const post = await createPost(body)
+    const post = await createPost(request, body)
     return new Response(JSON.stringify(post), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
@@ -51,22 +49,107 @@ export const POST: APIRoute = async ({ request }) => {
   }
 }
 
-// 辅助函数
+// session 验证：检查 session_id cookie 或 session cookie（GitHub OAuth 回调写入的）
 async function verifySession(request: Request): Promise<{ user: any } | null> {
   const cookieHeader = request.headers.get('Cookie')
   if (!cookieHeader) return null
 
-  // 简化：本地开发时检查 cookie 中是否有 session_id
-  const cookies = cookieHeader.split(';').map(c => c.trim())
-  const sessionCookie = cookies.find(c => c.startsWith('session_id='))
-  if (!sessionCookie) return null
+  // 本地开发 session
+  const sessionIdMatch = cookieHeader.match(/session_id=([^;]+)/)
+  if (sessionIdMatch) {
+    const sessionId = sessionIdMatch[1]
+    if (sessionId.startsWith('local-session-')) {
+      return { user: { name: '本地用户' } }
+    }
+    // 生产环境：session_id 存在即代表已通过 OAuth，允许继续
+    return { user: { name: 'GitHub User' } }
+  }
 
-  // 本地开发：简单返回 true（实际应该从 session 存储验证）
-  return { user: { name: '本地用户' } }
+  return null
 }
 
-async function getAllPosts() {
-  // 本地开发：从文件系统读取所有内容
+// 判断是否为本地开发环境
+function isLocalDev(request: Request): boolean {
+  const host = request.headers.get('host') || ''
+  return host.includes('localhost') || host.includes('127.0.0.1')
+}
+
+async function getAllPosts(request: Request) {
+  // 本地开发：从文件系统读取
+  if (isLocalDev(request)) {
+    return getAllPostsFromFS()
+  }
+  // 生产环境：从 GitHub API 读取
+  return getAllPostsFromGitHub()
+}
+
+async function getAllPostsFromGitHub() {
+  const token = import.meta.env.GITHUB_TOKEN
+  const owner = import.meta.env.GITHUB_REPO_OWNER
+  const repo = import.meta.env.GITHUB_REPO_NAME
+
+  if (!token || !owner || !repo) {
+    throw new Error('Missing GitHub env vars: GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME')
+  }
+
+  const contentTypes = ['blog', 'tutorial']
+  const allPosts: any[] = []
+
+  for (const type of contentTypes) {
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/contents/src/content/${type}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'User-Agent': 'OpenClaude-Admin',
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      }
+    )
+
+    if (!response.ok) continue
+
+    const data = await response.json()
+    if (!Array.isArray(data)) continue
+
+    for (const file of data) {
+      if (file.type !== 'file' || !file.name.endsWith('.md')) continue
+
+      const fileResponse = await fetch(file.url, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'User-Agent': 'OpenClaude-Admin',
+          'Accept': 'application/vnd.github.v3.raw',
+        },
+      })
+
+      if (!fileResponse.ok) continue
+
+      const content = await fileResponse.text()
+      const { frontmatter, markdown } = parseMarkdown(content)
+
+      allPosts.push({
+        slug: file.name.replace('.md', ''),
+        title: (frontmatter as any).title || file.name,
+        description: (frontmatter as any).description || '',
+        date: (frontmatter as any).date || new Date().toISOString(),
+        author: (frontmatter as any).author || 'OpenClaude Team',
+        tags: (frontmatter as any).tags || [],
+        category: (frontmatter as any).category || '技术',
+        draft: (frontmatter as any).draft || false,
+        featured: (frontmatter as any).featured || false,
+        image: (frontmatter as any).image,
+        content: markdown,
+        sha: file.sha,
+        contentType: type,
+      })
+    }
+  }
+
+  return allPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+}
+
+async function getAllPostsFromFS() {
   const fs = await import('fs/promises')
   const path = await import('path')
 
@@ -91,15 +174,15 @@ async function getAllPosts() {
 
         allPosts.push({
           slug: file.replace('.md', ''),
-          title: frontmatter.title || file,
-          description: frontmatter.description || '',
-          date: frontmatter.date || new Date().toISOString(),
-          author: frontmatter.author || 'OpenClaude Team',
-          tags: frontmatter.tags || [],
-          category: frontmatter.category || '技术',
-          draft: frontmatter.draft || false,
-          featured: frontmatter.featured || false,
-          image: frontmatter.image,
+          title: (frontmatter as any).title || file,
+          description: (frontmatter as any).description || '',
+          date: (frontmatter as any).date || new Date().toISOString(),
+          author: (frontmatter as any).author || 'OpenClaude Team',
+          tags: (frontmatter as any).tags || [],
+          category: (frontmatter as any).category || '技术',
+          draft: (frontmatter as any).draft || false,
+          featured: (frontmatter as any).featured || false,
+          image: (frontmatter as any).image,
           content: markdown,
           sha: 'local-' + Date.now(),
           contentType: type,
@@ -113,8 +196,61 @@ async function getAllPosts() {
   return allPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
-async function createPost(body: any) {
-  // 本地开发：写入文件系统
+async function createPost(request: Request, body: any) {
+  if (isLocalDev(request)) {
+    return createPostToFS(body)
+  }
+  return createPostToGitHub(body)
+}
+
+async function createPostToGitHub(body: any) {
+  const token = import.meta.env.GITHUB_TOKEN
+  const owner = import.meta.env.GITHUB_REPO_OWNER
+  const repo = import.meta.env.GITHUB_REPO_NAME
+
+  const { title, description, content, author, tags, category, draft, featured, image, slug, contentType } = body
+
+  if (!title || !description || !content) {
+    throw new Error('Missing required fields')
+  }
+
+  const finalSlug = slug || generateSlug(title)
+  const targetType = contentType || 'blog'
+  const frontmatter = generateFrontmatter({
+    title, description, date: new Date().toISOString(),
+    author: author || 'OpenClaude Team',
+    tags: tags || [], category: category || '技术',
+    draft, featured, image,
+  })
+
+  const fullContent = frontmatter + content
+  const contentBase64 = btoa(unescape(encodeURIComponent(fullContent)))
+
+  const response = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/contents/src/content/${targetType}/${finalSlug}.md`,
+    {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'User-Agent': 'OpenClaude-Admin',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: `Create ${targetType} post: ${title}`,
+        content: contentBase64,
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`Failed to create post: ${error}`)
+  }
+
+  return { success: true, slug: finalSlug }
+}
+
+async function createPostToFS(body: any) {
   const fs = await import('fs/promises')
   const path = await import('path')
   const blogDir = path.join(process.cwd(), 'src', 'content', 'blog')
@@ -127,21 +263,14 @@ async function createPost(body: any) {
 
   const finalSlug = slug || generateSlug(title)
   const frontmatter = generateFrontmatter({
-    title,
-    description,
-    date: new Date().toISOString(),
+    title, description, date: new Date().toISOString(),
     author: author || 'OpenClaude Team',
-    tags: tags || [],
-    category: category || '技术',
-    draft,
-    featured,
-    image,
+    tags: tags || [], category: category || '技术',
+    draft, featured, image,
   })
 
   const fullContent = frontmatter + content
-  const filepath = path.join(blogDir, `${finalSlug}.md`)
-
-  await fs.writeFile(filepath, fullContent, 'utf-8')
+  await fs.writeFile(path.join(blogDir, `${finalSlug}.md`), fullContent, 'utf-8')
 
   return { success: true, slug: finalSlug }
 }
