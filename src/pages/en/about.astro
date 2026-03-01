@@ -4,7 +4,7 @@ import { getEntry } from 'astro:content';
 
 export const prerender = true;
 
-const aboutPage = await getEntry('pages', 'about-en');
+const aboutPage = await getEntry('pages-en', 'about');
 const Content = aboutPage ? (await aboutPage.render()).Content : null;
 
 const title = aboutPage?.data?.title || 'About OpenClaude';

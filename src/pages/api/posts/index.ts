@@ -111,7 +111,7 @@ async function getAllPostsFromGitHub(env: any) {
     throw new Error('Missing GitHub env vars: GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME')
   }
 
-  const contentTypes = ['blog', 'tutorial', 'tutorial-en', 'pages']
+  const contentTypes = ['blog', 'blog-en', 'tutorial', 'tutorial-en', 'pages', 'pages-en']
   const allPosts: any[] = []
 
   // 并发获取各个 content 类型的目录列表

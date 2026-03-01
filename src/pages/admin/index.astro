@@ -23,7 +23,8 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
       view: 'login',
       posts: [],
       tutorials: [],
-      contentType: 'blog', // 'blog' or 'tutorial'
+      contentType: 'blog',
+      enableEnglish: true,
       error: '',
       user: null,
     }
@@ -246,62 +247,49 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                 href: '/',
                 style: { textDecoration: 'none', color: '#6B7280', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }
               }, '\u2190 返回首页'),
-              React.createElement('div', { style: { display: 'flex', gap: '8px' } },
-                React.createElement('button', {
-                  onClick: () => switchContentType('blog'),
-                  style: {
-                    padding: '8px 16px',
-                    background: state.contentType === 'blog' ? '#D4A574' : 'white',
-                    color: state.contentType === 'blog' ? 'white' : '#374151',
-                    border: state.contentType === 'blog' ? 'none' : '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                  }
-                }, '博客'),
-                React.createElement('button', {
-                  onClick: () => switchContentType('tutorial'),
-                  style: {
-                    padding: '8px 16px',
-                    background: state.contentType === 'tutorial' ? '#D4A574' : 'white',
-                    color: state.contentType === 'tutorial' ? 'white' : '#374151',
-                    border: state.contentType === 'tutorial' ? 'none' : '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                  }
-                }, '教程'),
-                React.createElement('button', {
-                  onClick: () => switchContentType('tutorial-en'),
-                  style: {
-                    padding: '8px 16px',
-                    background: state.contentType === 'tutorial-en' ? '#D4A574' : 'white',
-                    color: state.contentType === 'tutorial-en' ? 'white' : '#374151',
-                    border: state.contentType === 'tutorial-en' ? 'none' : '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                  }
-                }, '教程(EN)'),
-                React.createElement('button', {
-                  onClick: () => switchContentType('pages'),
-                  style: {
-                    padding: '8px 16px',
-                    background: state.contentType === 'pages' ? '#D4A574' : 'white',
-                    color: state.contentType === 'pages' ? 'white' : '#374151',
-                    border: state.contentType === 'pages' ? 'none' : '1px solid #E5E7EB',
-                    borderRadius: '6px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                  }
-                }, '单页')
+              React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px' } },
+                React.createElement('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } },
+                  React.createElement('span', { style: { fontSize: '12px', color: '#9CA3AF', width: '28px' } }, '中文'),
+                  React.createElement('button', { onClick: () => switchContentType('blog'), style: { padding: '6px 14px', background: state.contentType === 'blog' ? '#D4A574' : 'white', color: state.contentType === 'blog' ? 'white' : '#374151', border: state.contentType === 'blog' ? 'none' : '1px solid #E5E7EB', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' } }, '博客'),
+                  React.createElement('button', { onClick: () => switchContentType('tutorial'), style: { padding: '6px 14px', background: state.contentType === 'tutorial' ? '#D4A574' : 'white', color: state.contentType === 'tutorial' ? 'white' : '#374151', border: state.contentType === 'tutorial' ? 'none' : '1px solid #E5E7EB', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' } }, '教程'),
+                  React.createElement('button', { onClick: () => switchContentType('pages'), style: { padding: '6px 14px', background: state.contentType === 'pages' ? '#D4A574' : 'white', color: state.contentType === 'pages' ? 'white' : '#374151', border: state.contentType === 'pages' ? 'none' : '1px solid #E5E7EB', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' } }, '单页')
+                ),
+                React.createElement('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } },
+                  React.createElement('span', { style: { fontSize: '12px', color: '#9CA3AF', width: '28px' } }, 'EN'),
+                  React.createElement('button', { onClick: () => switchContentType('blog-en'), style: { padding: '6px 14px', background: state.contentType === 'blog-en' ? '#D4A574' : 'white', color: state.contentType === 'blog-en' ? 'white' : '#374151', border: state.contentType === 'blog-en' ? 'none' : '1px solid #E5E7EB', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' } }, '博客'),
+                  React.createElement('button', { onClick: () => switchContentType('tutorial-en'), style: { padding: '6px 14px', background: state.contentType === 'tutorial-en' ? '#D4A574' : 'white', color: state.contentType === 'tutorial-en' ? 'white' : '#374151', border: state.contentType === 'tutorial-en' ? 'none' : '1px solid #E5E7EB', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' } }, '教程'),
+                  React.createElement('button', { onClick: () => switchContentType('pages-en'), style: { padding: '6px 14px', background: state.contentType === 'pages-en' ? '#D4A574' : 'white', color: state.contentType === 'pages-en' ? 'white' : '#374151', border: state.contentType === 'pages-en' ? 'none' : '1px solid #E5E7EB', borderRadius: '6px', fontSize: '13px', fontWeight: '500', cursor: 'pointer' } }, '单页')
+                )
               )
             ),
             React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '12px' } },
+              React.createElement('button', {
+                onClick: async () => {
+                  const newVal = !state.enableEnglish;
+                  setState(prev => ({ ...prev, enableEnglish: newVal }));
+                  try {
+                    const getRes = await fetch('/api/posts/settings?type=pages', { headers: { 'Cache-Control': 'no-cache' } });
+                    const getData = await getRes.json();
+                    const sha = getData.sha || '';
+                    const content = JSON.stringify({ enableEnglish: newVal }, null, 2) + '\n';
+                    await fetch('/api/posts/settings', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ content, sha, enableEnglish: newVal })
+                    });
+                  } catch(e) { console.error('Toggle failed:', e); }
+                },
+                style: {
+                  padding: '6px 12px',
+                  background: state.enableEnglish ? '#D4A574' : '#E5E7EB',
+                  color: state.enableEnglish ? 'white' : '#6B7280',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }
+              }, state.enableEnglish ? '🌐 EN ✓' : '🌐 EN ✗'),
               React.createElement('span', { style: { fontSize: '14px', color: '#6B7280' } }, `${posts.length} 篇`),
               React.createElement('button', {
                 onClick: handleLogout,
@@ -379,7 +367,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                       ),
                       React.createElement('td', { style: { padding: '16px 20px', textAlign: 'right' } },
                         React.createElement('a', {
-                          href: (() => { const t = post.contentType || state.contentType; if (t === 'blog') return `/blog/${post.slug}`; if (t === 'pages') return `/${post.slug}/`; if (t === 'tutorial-en') return `/en/tutorial/${post.slug}`; return `/tutorial/${post.slug}`; })(),
+                          href: (() => { const t = post.contentType || state.contentType; if (t === 'blog') return `/blog/${post.slug}`; if (t === 'blog-en') return `/en/blog/${post.slug}`; if (t === 'pages') return `/${post.slug}/`; if (t === 'pages-en') return `/en/${post.slug}/`; if (t === 'tutorial-en') return `/en/tutorial/${post.slug}`; return `/tutorial/${post.slug}`; })(),
                           target: '_blank',
                           style: { padding: '6px 14px', background: 'transparent', border: 'none', color: '#6B7280', fontSize: '14px', cursor: 'pointer', borderRadius: '6px', marginRight: '4px', textDecoration: 'none' }
                         }, '查看'),

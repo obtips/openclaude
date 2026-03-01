@@ -45,9 +45,19 @@ const pages = defineCollection({
   schema: pageSchema,
 })
 
+const blogEn = defineCollection({
+  schema: blogSchema,
+})
+
+const pagesEn = defineCollection({
+  schema: pageSchema,
+})
+
 export const collections = {
   blog,
+  'blog-en': blogEn,
   tutorial,
   'tutorial-en': tutorialEn,
   pages,
+  'pages-en': pagesEn,
 }
