@@ -167,12 +167,14 @@ async function getPostFromGitHub(env: any, slug: string) {
   }
 
   const response = await fetch(
-    `https://api.github.com/repos/${owner}/${repo}/contents/src/content/blog/${slug}.md`,
+    `https://api.github.com/repos/${owner}/${repo}/contents/src/content/blog/${slug}.md?t=${Date.now()}`,
     {
       headers: {
         'Authorization': `Bearer ${token}`,
         'User-Agent': 'OpenClaude-Admin',
         'Accept': 'application/vnd.github.v3.raw',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
       },
     }
   )

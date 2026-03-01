@@ -116,12 +116,14 @@ async function getAllPostsFromGitHub(env: any) {
 
   for (const type of contentTypes) {
     const response = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/contents/src/content/${type}`,
+      `https://api.github.com/repos/${owner}/${repo}/contents/src/content/${type}?t=${Date.now()}`,
       {
         headers: {
           'Authorization': `Bearer ${token}`,
           'User-Agent': 'OpenClaude-Admin',
           'Accept': 'application/vnd.github.v3+json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
         },
       }
     )
@@ -134,11 +136,13 @@ async function getAllPostsFromGitHub(env: any) {
     for (const file of data) {
       if (file.type !== 'file' || !file.name.endsWith('.md')) continue
 
-      const fileResponse = await fetch(file.url, {
+      const fileResponse = await fetch(`${file.url}&t=${Date.now()}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'User-Agent': 'OpenClaude-Admin',
           'Accept': 'application/vnd.github.v3.raw',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
         },
       })
 
