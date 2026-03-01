@@ -91,7 +91,7 @@ const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
     const el = document.getElementById('lang-switch');
     if (!el) return;
 
-    const showButton = (show: boolean) => {
+    const showButton = (show) => {
       if (show) {
         el.style.display = '';
         el.classList.remove('hidden');
