@@ -87,8 +87,9 @@ export const GET: APIRoute = async ({ url }) => {
     // 重定向到管理后台
     const headers = new Headers({
       'Location': `/admin`,
-      'Set-Cookie': `${sessionCookie}\n${idCookie}`,
     })
+    headers.append('Set-Cookie', sessionCookie)
+    headers.append('Set-Cookie', idCookie)
 
     return new Response(null, { status: 302, headers })
   } catch (err: any) {
