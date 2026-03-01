@@ -31,6 +31,13 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
     function AdminApp() {
       const [state, setState] = React.useState(initialState)
 
+      const fetchWithAuth = async (url, options = {}) => {
+        return fetch(url, {
+          ...options,
+          credentials: 'same-origin',
+        })
+      }
+
       // 检查登录状态
       React.useEffect(() => {
         checkLogin()
@@ -38,7 +45,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
 
       const checkLogin = async () => {
         try {
-          const response = await fetch(`${API_BASE}/auth/session`)
+          const response = await fetchWithAuth(`${API_BASE}/auth/session`)
           if (response.ok) {
             const sessionData = await response.json()
             setState({
@@ -62,7 +69,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
 
       const loadPosts = async () => {
         try {
-          const response = await fetch(`${API_BASE}/posts`)
+          const response = await fetchWithAuth(`${API_BASE}/posts`)
           if (response.ok) {
             const posts = await response.json()
             setState(prev => ({ ...prev, posts }))
@@ -81,7 +88,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
           window.location.href = '/api/auth/login'
         } else {
           // 本地开发：使用简单登录
-          const response = await fetch(`${API_BASE}/auth/login`, { method: 'POST' })
+          const response = await fetchWithAuth(`${API_BASE}/auth/login`, { method: 'POST' })
           if (response.ok) {
             await checkLogin()
           }
@@ -89,7 +96,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
       }
 
       const handleLogout = async () => {
-        await fetch(`${API_BASE}/auth/logout`, { method: 'POST' })
+        await fetchWithAuth(`${API_BASE}/auth/logout`, { method: 'POST' })
         setState({ ...initialState, view: 'login' })
       }
 
@@ -99,7 +106,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
 
       const handleEdit = async (slug) => {
         try {
-          const response = await fetch(`${API_BASE}/posts/${slug}`)
+          const response = await fetchWithAuth(`${API_BASE}/posts/${slug}`)
           if (response.ok) {
             const post = await response.json()
             setState({ ...state, view: 'edit', currentPost: post })
@@ -115,7 +122,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
 
         try {
           const url = `${API_BASE}/posts${isNew ? '' : '/' + slug}`
-          const response = await fetch(url, {
+          const response = await fetchWithAuth(url, {
             method: isNew ? 'POST' : 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...post, sha: state.currentPost?.sha }),
@@ -136,7 +143,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
 
       const handleDelete = async (slug, sha) => {
         try {
-          const response = await fetch(`${API_BASE}/posts/${slug}`, {
+          const response = await fetchWithAuth(`${API_BASE}/posts/${slug}`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sha }),

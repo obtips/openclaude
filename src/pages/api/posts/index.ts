@@ -69,8 +69,19 @@ async function verifySession(request: Request): Promise<{ user: any } | null> {
     if (sessionId.startsWith('local-session-')) {
       return { user: { name: '本地用户' } }
     }
-    // 生产环境：session_id 存在即代表已通过 OAuth，允许继续
-    return { user: { name: 'GitHub User' } }
+  }
+
+  // 生产环境：检查 session 数据，确保不过期
+  const sessionDataMatch = cookieHeader.match(/session=([^;]+)/)
+  if (sessionDataMatch) {
+    try {
+      const sessionData = JSON.parse(decodeURIComponent(sessionDataMatch[1]))
+      if (sessionData.expiresAt && sessionData.expiresAt > Date.now()) {
+        return { user: sessionData.user }
+      }
+    } catch (e) {
+      // 解析失败
+    }
   }
 
   return null
