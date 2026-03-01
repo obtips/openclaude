@@ -198,6 +198,7 @@ async function getPostFromGitHub(env: any, slug: string, request: Request) {
     author: (frontmatter as any).author || 'OpenClaude Team',
     tags: (frontmatter as any).tags || [],
     category: (frontmatter as any).category || '技术',
+    difficulty: (frontmatter as any).difficulty,
     draft: (frontmatter as any).draft || false,
     featured: (frontmatter as any).featured || false,
     image: (frontmatter as any).image,
@@ -252,7 +253,7 @@ async function updatePostToGitHub(env: any, slug: string, body: any) {
   const owner = env?.GITHUB_REPO_OWNER || import.meta.env.GITHUB_REPO_OWNER
   const repo = env?.GITHUB_REPO_NAME || import.meta.env.GITHUB_REPO_NAME
 
-  const { title, description, content, author, tags, category, draft, featured, image, newSlug, sha } = body
+  const { title, description, content, author, tags, category, difficulty, draft, featured, image, newSlug, sha } = body
 
   if (!sha) {
     throw new Error('SHA is required to update a file on GitHub')
@@ -264,7 +265,7 @@ async function updatePostToGitHub(env: any, slug: string, body: any) {
     title, description, date: body.date || new Date().toISOString(),
     author: author || 'OpenClaude Team',
     tags: tags || [], category: category || '技术',
-    draft, featured, image,
+    difficulty, draft, featured, image,
   })
 
   const fullContent = frontmatter + content
@@ -300,14 +301,14 @@ async function updatePostToFS(slug: string, body: any) {
   const path = await import('path')
   const blogDir = path.join(process.cwd(), 'src', 'content', 'blog')
 
-  const { title, description, content, author, tags, category, draft, featured, image, newSlug } = body
+  const { title, description, content, author, tags, category, difficulty, draft, featured, image, newSlug } = body
   const targetSlug = newSlug || slug
 
   const frontmatter = generateFrontmatter({
     title, description, date: body.date || new Date().toISOString(),
     author: author || 'OpenClaude Team',
     tags: tags || [], category: category || '技术',
-    draft, featured, image,
+    difficulty, draft, featured, image,
   })
 
   const fullContent = frontmatter + content
@@ -409,17 +410,18 @@ function parseMarkdown(content: string) {
 
 function generateFrontmatter(post: any) {
   const tags = (post.tags || []).map((t: string) => `'${t}'`).join(', ')
-  return `---
+  let fm = `---
 title: '${post.title}'
 description: '${post.description}'
 date: ${post.date}
 author: '${post.author}'
 tags: [${tags}]
-category: '${post.category}'
-${post.draft !== undefined ? `draft: ${post.draft}` : ''}
-${post.featured ? 'featured: true' : ''}
-${post.image ? `image: '${post.image}'` : ''}
----
-
 `
+  if (post.category) fm += `category: '${post.category}'\n`
+  if (post.difficulty) fm += `difficulty: '${post.difficulty}'\n`
+  if (post.draft !== undefined && post.draft !== false) fm += `draft: ${post.draft}\n`
+  if (post.featured) fm += `featured: true\n`
+  if (post.image) fm += `image: '${post.image}'\n`
+  fm += `---\n\n`
+  return fm
 }

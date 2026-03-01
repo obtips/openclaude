@@ -163,6 +163,7 @@ async function getAllPostsFromGitHub(env: any) {
           author: (frontmatter as any).author || 'OpenClaude Team',
           tags: (frontmatter as any).tags || [],
           category: (frontmatter as any).category || '技术',
+          difficulty: (frontmatter as any).difficulty,
           draft: (frontmatter as any).draft || false,
           featured: (frontmatter as any).featured || false,
           image: (frontmatter as any).image,
