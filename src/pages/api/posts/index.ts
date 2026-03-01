@@ -2,7 +2,11 @@
 export const prerender = false
 import type { APIRoute } from 'astro'
 
-export const GET: APIRoute = async ({ request }) => {
+export const GET: APIRoute = async (context) => {
+  const { request, locals } = context
+  // 从 Cloudflare locals runtime 获取环境变量，回退到 import.meta.env（用于本地开发）
+  const env = (locals as any).runtime?.env || import.meta.env
+
   // 检查 session
   const session = await verifySession(request)
   if (!session) {
@@ -13,7 +17,7 @@ export const GET: APIRoute = async ({ request }) => {
   }
 
   try {
-    const posts = await getAllPosts(request)
+    const posts = await getAllPosts(request, env)
     return new Response(JSON.stringify(posts), {
       headers: { 'Content-Type': 'application/json' },
     })
@@ -25,7 +29,11 @@ export const GET: APIRoute = async ({ request }) => {
   }
 }
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async (context) => {
+  const { request, locals } = context
+  // 从 Cloudflare locals runtime 获取环境变量，回退到 import.meta.env
+  const env = (locals as any).runtime?.env || import.meta.env
+
   const session = await verifySession(request)
   if (!session) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -36,7 +44,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const body = await request.json()
-    const post = await createPost(request, body)
+    const post = await createPost(request, env, body)
     return new Response(JSON.stringify(post), {
       status: 201,
       headers: { 'Content-Type': 'application/json' },
@@ -74,19 +82,19 @@ function isLocalDev(request: Request): boolean {
   return host.includes('localhost') || host.includes('127.0.0.1')
 }
 
-async function getAllPosts(request: Request) {
+async function getAllPosts(request: Request, env: any) {
   // 本地开发：从文件系统读取
   if (isLocalDev(request)) {
     return getAllPostsFromFS()
   }
   // 生产环境：从 GitHub API 读取
-  return getAllPostsFromGitHub()
+  return getAllPostsFromGitHub(env)
 }
 
-async function getAllPostsFromGitHub() {
-  const token = import.meta.env.GITHUB_TOKEN
-  const owner = import.meta.env.GITHUB_REPO_OWNER
-  const repo = import.meta.env.GITHUB_REPO_NAME
+async function getAllPostsFromGitHub(env: any) {
+  const token = env?.GITHUB_TOKEN || import.meta.env.GITHUB_TOKEN
+  const owner = env?.GITHUB_REPO_OWNER || import.meta.env.GITHUB_REPO_OWNER
+  const repo = env?.GITHUB_REPO_NAME || import.meta.env.GITHUB_REPO_NAME
 
   if (!token || !owner || !repo) {
     throw new Error('Missing GitHub env vars: GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME')
@@ -196,17 +204,17 @@ async function getAllPostsFromFS() {
   return allPosts.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 }
 
-async function createPost(request: Request, body: any) {
+async function createPost(request: Request, env: any, body: any) {
   if (isLocalDev(request)) {
     return createPostToFS(body)
   }
-  return createPostToGitHub(body)
+  return createPostToGitHub(env, body)
 }
 
-async function createPostToGitHub(body: any) {
-  const token = import.meta.env.GITHUB_TOKEN
-  const owner = import.meta.env.GITHUB_REPO_OWNER
-  const repo = import.meta.env.GITHUB_REPO_NAME
+async function createPostToGitHub(env: any, body: any) {
+  const token = env?.GITHUB_TOKEN || import.meta.env.GITHUB_TOKEN
+  const owner = env?.GITHUB_REPO_OWNER || import.meta.env.GITHUB_REPO_OWNER
+  const repo = env?.GITHUB_REPO_NAME || import.meta.env.GITHUB_REPO_NAME
 
   const { title, description, content, author, tags, category, draft, featured, image, slug, contentType } = body
 
