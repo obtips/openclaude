@@ -389,14 +389,26 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
         )
       }
 
-      // 简化的编辑器组件
-      const PostEditor = ({ initialPost, onSave, onCancel, isNew }) => {
+      // 内容类型标签映射
+      const contentTypeLabels = {
+        blog: '中文 · 博客', 'blog-en': 'EN · Blog',
+        tutorial: '中文 · 教程', 'tutorial-en': 'EN · Tutorial',
+        pages: '中文 · 单页', 'pages-en': 'EN · Page'
+      }
+
+      // 编辑器组件
+      const PostEditor = ({ initialPost, onSave, onCancel, isNew, contentType }) => {
+        const isBlog = contentType === 'blog' || contentType === 'blog-en'
+        const isTutorial = contentType === 'tutorial' || contentType === 'tutorial-en'
+        const isPage = contentType === 'pages' || contentType === 'pages-en'
+
         const [title, setTitle] = React.useState(initialPost?.title || '')
         const [description, setDescription] = React.useState(initialPost?.description || '')
         const [content, setContent] = React.useState(initialPost?.content || '')
         const [author, setAuthor] = React.useState(initialPost?.author || 'OpenClaude Team')
         const [tags, setTags] = React.useState(initialPost?.tags?.join(', ') || '')
         const [category, setCategory] = React.useState(initialPost?.category || '技术')
+        const [difficulty, setDifficulty] = React.useState(initialPost?.difficulty || 'beginner')
         const [draft, setDraft] = React.useState(initialPost?.draft || false)
         const [featured, setFeatured] = React.useState(initialPost?.featured || false)
         const [image, setImage] = React.useState(initialPost?.image || '')
@@ -404,7 +416,8 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
         const [saving, setSaving] = React.useState(false)
         const [error, setError] = React.useState('')
 
-        const categories = ['技术', '公告', '教程', '产品', '社区', 'AI', '开发']
+        const categories = contentType?.includes('en') ? ['Tech', 'Announcement', 'Tutorial', 'Product', 'Community', 'AI', 'Dev'] : ['技术', '公告', '教程', '产品', '社区', 'AI', '开发']
+        const difficultyOptions = [{ value: 'beginner', label: '入门', labelEn: 'Beginner' }, { value: 'intermediate', label: '进阶', labelEn: 'Intermediate' }, { value: 'advanced', label: '高级', labelEn: 'Advanced' }]
 
         const handleSave = async () => {
           if (!title.trim() || !description.trim()) {
@@ -414,22 +427,13 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
           setSaving(true)
           setError('')
 
-          const post = {
-            title,
-            description,
-            date: initialPost?.date || new Date().toISOString(),
-            content,
-            author,
-            tags: tags.split(',').map(t => t.trim()).filter(t => t),
-            category,
-            draft,
-            featured,
-            image: image || undefined,
+          const post = { title, description, date: initialPost?.date || new Date().toISOString(), content }
+          if (isBlog) {
+            Object.assign(post, { author, tags: tags.split(',').map(t => t.trim()).filter(t => t), category, draft, featured, image: image || undefined })
+          } else if (isTutorial) {
+            Object.assign(post, { author, tags: tags.split(',').map(t => t.trim()).filter(t => t), difficulty, draft })
           }
-
-          if ((isNew || slug !== initialPost?.slug) && slug) {
-            post.slug = slug
-          }
+          if ((isNew || slug !== initialPost?.slug) && slug) { post.slug = slug }
 
           const success = await onSave(post, initialPost?.sha)
           if (!success) setError('保存失败')
@@ -445,7 +449,8 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                 style: { textDecoration: 'none', color: '#6B7280', fontSize: '14px', display: 'inline-flex', alignItems: 'center', gap: '4px', marginBottom: '8px' }
               }, '\u2190 返回列表'),
               React.createElement('h1', { style: { fontSize: '24px', fontWeight: '600', color: '#1A1A1A' } }, isNew ? '新建文章' : '编辑文章'),
-              !isNew && React.createElement('p', { style: { fontSize: '14px', color: '#9CA3AF', marginTop: '4px' } }, `/${initialPost?.slug}`)
+              React.createElement('p', { style: { fontSize: '13px', color: '#D4A574', marginTop: '4px', fontWeight: '500' } }, `📝 ${contentTypeLabels[contentType] || contentType}`),
+              !isNew && React.createElement('p', { style: { fontSize: '14px', color: '#9CA3AF', marginTop: '2px' } }, `/${initialPost?.slug}`)
             ),
             React.createElement('div', { style: { display: 'flex', gap: '8px' } },
               React.createElement('button', {
@@ -514,7 +519,8 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                 })
               ),
 
-              React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' } },
+              // 博客：分类 + 标签
+              isBlog && React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' } },
                 React.createElement('div', null,
                   React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '分类'),
                   React.createElement('select', {
@@ -528,32 +534,43 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                 React.createElement('div', null,
                   React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '标签'),
                   React.createElement('input', {
-                    type: 'text',
-                    value: tags,
-                    onChange: (e) => setTags(e.target.value),
+                    type: 'text', value: tags, onChange: (e) => setTags(e.target.value),
                     placeholder: 'React, JavaScript',
                     style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }
                   })
                 )
               ),
 
-              React.createElement('div', { style: { display: 'flex', gap: '24px', paddingTop: '8px' } },
-                React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#374151', cursor: 'pointer' } },
+              // 教程：难度等级 + 标签
+              isTutorial && React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '16px' } },
+                React.createElement('div', null,
+                  React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '难度等级'),
+                  React.createElement('select', {
+                    value: difficulty,
+                    onChange: (e) => setDifficulty(e.target.value),
+                    style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box', background: 'white' }
+                  }, difficultyOptions.map(opt =>
+                    React.createElement('option', { key: opt.value, value: opt.value }, contentType?.includes('en') ? opt.labelEn : opt.label)
+                  ))
+                ),
+                React.createElement('div', null,
+                  React.createElement('label', { style: { display: 'block', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' } }, '标签'),
                   React.createElement('input', {
-                    type: 'checkbox',
-                    checked: draft,
-                    onChange: (e) => setDraft(e.target.checked),
-                    style: { width: '16px', height: '16px' }
-                  }),
+                    type: 'text', value: tags, onChange: (e) => setTags(e.target.value),
+                    placeholder: 'Claude, AI',
+                    style: { width: '100%', padding: '10px 14px', border: '1px solid #E5E7EB', borderRadius: '8px', fontSize: '14px', boxSizing: 'border-box' }
+                  })
+                )
+              ),
+
+              // 选项行（博客和教程）
+              !isPage && React.createElement('div', { style: { display: 'flex', gap: '24px', paddingTop: '8px' } },
+                React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#374151', cursor: 'pointer' } },
+                  React.createElement('input', { type: 'checkbox', checked: draft, onChange: (e) => setDraft(e.target.checked), style: { width: '16px', height: '16px' } }),
                   '草稿'
                 ),
-                React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#374151', cursor: 'pointer' } },
-                  React.createElement('input', {
-                    type: 'checkbox',
-                    checked: featured,
-                    onChange: (e) => setFeatured(e.target.checked),
-                    style: { width: '16px', height: '16px' }
-                  }),
+                isBlog && React.createElement('label', { style: { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', color: '#374151', cursor: 'pointer' } },
+                  React.createElement('input', { type: 'checkbox', checked: featured, onChange: (e) => setFeatured(e.target.checked), style: { width: '16px', height: '16px' } }),
                   '精选'
                 )
               )
@@ -593,6 +610,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
         isNew: state.view === 'new',
         onSave: handleSave,
         onCancel: handleCancel,
+        contentType: state.contentType,
       })
     }
 
