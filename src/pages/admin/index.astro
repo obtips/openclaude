@@ -278,16 +278,12 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                     const getData = await getRes.json();
                     const sha = getData.sha;
                     
-                    if (!sha) {
-                      throw new Error('获取 settings.json 的 SHA 失败');
-                    }
-                    
-                    // 3. Update file
+                    // 3. Update file (pass sha only if it exists, GitHub allows omit for create)
                     const content = JSON.stringify({ enableEnglish: newVal }, null, 2) + '\n';
                     const putRes = await fetchWithAuth('/api/posts/settings', {
                       method: 'PUT',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ content, sha, enableEnglish: newVal })
+                      body: JSON.stringify({ content, sha: sha || undefined, enableEnglish: newVal })
                     });
                     
                     if (!putRes.ok) {

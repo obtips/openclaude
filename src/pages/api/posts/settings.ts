@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ request }) => {
         )
 
         if (!response.ok) {
-            return new Response(JSON.stringify({ enableEnglish: true }), {
+            return new Response(JSON.stringify({ enableEnglish: false }), {
                 headers: { 'Content-Type': 'application/json' }
             })
         }
@@ -41,7 +41,7 @@ export const GET: APIRoute = async ({ request }) => {
             }
         })
     } catch {
-        return new Response(JSON.stringify({ enableEnglish: true }), {
+        return new Response(JSON.stringify({ enableEnglish: false }), {
             headers: {
                 'Content-Type': 'application/json',
                 'Cache-Control': 'no-store, no-cache, must-revalidate'
