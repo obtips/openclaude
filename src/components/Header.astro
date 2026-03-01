@@ -8,13 +8,6 @@ const { lang = 'zh' } = Astro.props
 // 是否为开发环境
 const isDev = import.meta.env.DEV
 
-// 读取站点设置
-let enableEnglish = true
-try {
-  const settingsModule = await import('../content/pages/settings.json')
-  enableEnglish = settingsModule.default?.enableEnglish !== false
-} catch { /* default to true */ }
-
 const nav = {
   zh: {
     home: '首页',
@@ -77,17 +70,37 @@ const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
         )}
       </nav>
 
-      <!-- 语言切换 -->
-      {enableEnglish && (
-        <a
-          href={switchPath}
-          class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-claude-border hover:bg-claude-warm transition-colors text-sm"
-          title={lang === 'zh' ? 'Switch to English' : '切换到中文'}
-        >
-          <span>🌐</span>
-          <span>{lang === 'zh' ? 'EN' : '中文'}</span>
-        </a>
-      )}
+      <!-- 语言切换（初始隐藏，由客户端脚本控制显示） -->
+      <a
+        id="lang-switch"
+        href={switchPath}
+        class="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-claude-border hover:bg-claude-warm transition-colors text-sm"
+        title={lang === 'zh' ? 'Switch to English' : '切换到中文'}
+        style="display:none;"
+      >
+        <span>🌐</span>
+        <span>{lang === 'zh' ? 'EN' : '中文'}</span>
+      </a>
     </div>
   </div>
 </header>
+
+<script>
+  // 客户端动态检查英文版开关状态
+  (async () => {
+    try {
+      const res = await fetch('/api/posts/settings');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.enableEnglish !== false) {
+          const el = document.getElementById('lang-switch');
+          if (el) el.style.display = '';
+        }
+      }
+    } catch {
+      // API 不可用时默认显示
+      const el = document.getElementById('lang-switch');
+      if (el) el.style.display = '';
+    }
+  })();
+</script>
