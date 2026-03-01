@@ -87,20 +87,26 @@ const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
 
 <script>
   // 客户端动态检查英文版开关状态
-  (async () => {
+  (() => {
+    const el = document.getElementById('lang-switch');
+    if (!el) return;
+
+    // 优先从 localStorage 读取（即时生效）
     try {
-      const res = await fetch('/api/posts/settings');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.enableEnglish !== false) {
-          const el = document.getElementById('lang-switch');
-          if (el) el.style.display = '';
-        }
+      const cached = localStorage.getItem('oc_enableEnglish');
+      if (cached !== null) {
+        if (JSON.parse(cached) !== false) el.style.display = '';
+        return; // localStorage 有值，直接使用，不再请求 API
       }
-    } catch {
-      // API 不可用时默认显示
-      const el = document.getElementById('lang-switch');
-      if (el) el.style.display = '';
-    }
+    } catch {}
+
+    // localStorage 没有值时，从 API 获取
+    fetch('/api/posts/settings')
+      .then(r => r.ok ? r.json() : { enableEnglish: true })
+      .then(data => {
+        try { localStorage.setItem('oc_enableEnglish', JSON.stringify(data.enableEnglish !== false)); } catch {}
+        if (data.enableEnglish !== false) el.style.display = '';
+      })
+      .catch(() => { el.style.display = ''; });
   })();
 </script>

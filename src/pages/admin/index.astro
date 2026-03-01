@@ -267,6 +267,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                 onClick: async () => {
                   const newVal = !state.enableEnglish;
                   setState(prev => ({ ...prev, enableEnglish: newVal }));
+                  try { localStorage.setItem('oc_enableEnglish', JSON.stringify(newVal)); } catch {}
                   try {
                     const getRes = await fetch('/api/posts/settings?type=pages', { headers: { 'Cache-Control': 'no-cache' } });
                     const getData = await getRes.json();
