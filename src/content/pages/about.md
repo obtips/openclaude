@@ -1,7 +1,15 @@
 ---
-title: "关于 OpenClaude"
-description: "致力于打造极速、极简、极美的现代化文档与博客框架。"
+title: '关于 OpenClaude'
+description: '致力于打造极速、极简、极美的现代化文档与博客框架。'
+date: 2026-03-01T10:11:07.764Z
+author: 'OpenClaude Team'
+tags: []
+category: '技术'
+draft: false
+
+
 ---
+
 
 ## 项目初衷
 OpenClaude 是一个开源的静态站点生成系统，专为希望拥有极致性能并且美观极简外观的开发者、写作者设计。
@@ -13,5 +21,5 @@ OpenClaude 是一个开源的静态站点生成系统，专为希望拥有极致
 - **全端编辑**：无论身在何处，只要登录自带的管理后台，即可通过 GitHub 实时同步。
 - **SEO 友好**：原生 SSR 与自动元数据生成，搜索引擎收录毫不费力。
 
-## 联系我们
-如果您对该项目感兴趣或者想共同参与贡献，欢迎在 [GitHub Repository](https://github.com/obtips/openclaude) 上提交 Issue 或 PR！
+
+
