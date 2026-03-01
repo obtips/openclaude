@@ -109,7 +109,10 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
           const response = await fetchWithAuth(`${API_BASE}/posts/${slug}`)
           if (response.ok) {
             const post = await response.json()
-            setState({ ...state, view: 'edit', currentPost: post })
+            // IMPORTANT: GitHub single file `.raw` fetch DOES NOT return `sha`.
+            // We must merge the `sha` that was fetched from the list endpoint!
+            const listPost = state.posts.find(p => p.slug === slug) || state.tutorials.find(p => p.slug === slug)
+            setState({ ...state, view: 'edit', currentPost: { ...post, sha: listPost?.sha } })
           }
         } catch (e) {
           setState({ ...state, error: '加载文章失败' })
