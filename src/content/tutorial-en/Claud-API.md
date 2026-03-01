@@ -4,11 +4,12 @@ description: 'an intro'
 date: 2026-03-01T12:00:49.255Z
 author: 'OpenClaude Team'
 tags: ['api', '入门', '基础']
-category: '教程'
+category: '技术'
 draft: false
 
 
 ---
+
 
 
 
