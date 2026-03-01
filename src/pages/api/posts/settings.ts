@@ -1,13 +1,16 @@
 import type { APIRoute } from 'astro'
 
 // GET: 获取 settings.json
-export const GET: APIRoute = async ({ request }) => {
-    const token = import.meta.env.GITHUB_TOKEN
-    const owner = import.meta.env.GITHUB_REPO_OWNER
-    const repo = import.meta.env.GITHUB_REPO_NAME
+export const GET: APIRoute = async (context) => {
+    const { request, locals } = context
+    const env = (locals as any).runtime?.env || import.meta.env
+
+    const token = env.GITHUB_TOKEN
+    const owner = env.GITHUB_REPO_OWNER
+    const repo = env.GITHUB_REPO_NAME
 
     if (!token || !owner || !repo) {
-        return new Response(JSON.stringify({ enableEnglish: true }), {
+        return new Response(JSON.stringify({ enableEnglish: false }), {
             headers: { 'Content-Type': 'application/json' }
         })
     }
@@ -51,10 +54,13 @@ export const GET: APIRoute = async ({ request }) => {
 }
 
 // PUT: 更新 settings.json
-export const PUT: APIRoute = async ({ request }) => {
-    const token = import.meta.env.GITHUB_TOKEN
-    const owner = import.meta.env.GITHUB_REPO_OWNER
-    const repo = import.meta.env.GITHUB_REPO_NAME
+export const PUT: APIRoute = async (context) => {
+    const { request, locals } = context
+    const env = (locals as any).runtime?.env || import.meta.env
+
+    const token = env.GITHUB_TOKEN
+    const owner = env.GITHUB_REPO_OWNER
+    const repo = env.GITHUB_REPO_NAME
 
     if (!token || !owner || !repo) {
         return new Response(JSON.stringify({ error: 'Missing env vars' }), {
