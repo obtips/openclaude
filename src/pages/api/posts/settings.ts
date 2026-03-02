@@ -25,14 +25,14 @@ export const GET: APIRoute = async (context) => {
 
     try {
         const response = await fetch(
-            `https://api.github.com/repos/${owner}/${repo}/contents/src/content/pages/settings.json?t=${Date.now()}`,
+            `https://api.github.com/repos/${owner}/${repo}/contents/src/content/pages/settings.json`,
             {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     Accept: 'application/vnd.github.v3+json',
-                    'Cache-Control': 'no-cache',
-                    'User-Agent': 'Cloudflare-Pages'
+                    'User-Agent': 'OpenClaude-Bot'
                 },
+                // GitHub API 默认有 ETag 缓存，利用它
             }
         )
 
@@ -60,14 +60,15 @@ export const GET: APIRoute = async (context) => {
         return new Response(JSON.stringify({ ...settings, sha: data.sha }), {
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-store, no-cache, must-revalidate'
+                // 缓存 60 秒，让前端可以短暂缓存
+                'Cache-Control': 'public, max-age=60, s-maxage=60'
             }
         })
     } catch {
         return new Response(JSON.stringify({ enableEnglish: false }), {
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-store, no-cache, must-revalidate'
+                'Cache-Control': 'public, max-age=60, s-maxage=60'
             }
         })
     }
