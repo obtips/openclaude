@@ -6,16 +6,25 @@ export default {
     extend: {
       colors: {
         claude: {
-          cream: '#F5F1E8',
-          warm: '#FAF8F3',
+          cream: '#FAFAF6',
+          warm: '#FFFEFB',
           text: '#1A1A1A',
-          'text-light': '#6B6B6B',
-          accent: '#D4A574',
-          border: '#E8E4DB',
+          'text-light': '#666666',
+          accent: '#D97706',
+          border: '#E8E4DE',
+        },
+        // 康定斯基色彩
+        kandinsky: {
+          yellow: '#FFC72C',
+          blue: '#4A90D9',
+          red: '#E85D4C',
+          black: '#1A1A1A',
+          white: '#FAFAF5',
         },
       },
       fontFamily: {
-        sans: ['Figtree', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['Playfair Display', 'Georgia', 'serif'],
       },
       borderRadius: {
         'lg': '12px',

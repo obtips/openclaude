@@ -9,8 +9,16 @@ export const GET: APIRoute = async (context) => {
     const owner = env.GITHUB_REPO_OWNER
     const repo = env.GITHUB_REPO_NAME
 
+    // Debug: 返回环境变量信息（隐藏 token）
     if (!token || !owner || !repo) {
-        return new Response(JSON.stringify({ enableEnglish: false }), {
+        return new Response(JSON.stringify({
+            enableEnglish: false,
+            _debug: 'Missing env vars',
+            _hasToken: !!token,
+            _hasOwner: !!owner,
+            _hasRepo: !!repo,
+            _tokenPrefix: token?.substring(0, 10) || 'empty'
+        }), {
             headers: { 'Content-Type': 'application/json' }
         })
     }
@@ -30,7 +38,17 @@ export const GET: APIRoute = async (context) => {
 
         if (!response.ok) {
             const errText = await response.text()
-            return new Response(JSON.stringify({ enableEnglish: false, _debug: errText, _status: response.status }), {
+            return new Response(JSON.stringify({
+                enableEnglish: false,
+                _debug: errText,
+                _status: response.status,
+                _debugInfo: {
+                    owner,
+                    repo,
+                    tokenPrefix: token?.substring(0, 7) + '...',
+                    tokenType: typeof token
+                }
+            }), {
                 headers: { 'Content-Type': 'application/json' }
             })
         }

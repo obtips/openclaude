@@ -24,7 +24,7 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
       posts: [],
       tutorials: [],
       contentType: 'blog',
-      enableEnglish: true,
+      enableEnglish: true,  // 默认值，会被 checkLogin 中的 API 调用覆盖
       error: '',
       user: null,
     }
@@ -55,9 +55,26 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
               error: '',
               user: sessionData.user
             }))
-            // 如果是初始检查或没有文章才加载文章列表
+            // 如果是初始检查，加载文章列表和 enableEnglish 设置
             if (isInitialCheck) {
               loadPosts()
+              // 从 API 获取 enableEnglish 状态
+              try {
+                const settingsRes = await fetchWithAuth('/api/posts/settings?t=' + Date.now(), {
+                  cache: 'no-store'
+                })
+                if (settingsRes.ok) {
+                  const settingsData = await settingsRes.json()
+                  const isEnabled = settingsData.enableEnglish !== false
+                  setState(prev => ({ ...prev, enableEnglish: isEnabled }))
+                  // 广播事件让 Header 响应
+                  window.dispatchEvent(new CustomEvent('oc_lang_toggled', {
+                    detail: { isEnabled }
+                  }))
+                }
+              } catch (e) {
+                console.error('Load settings failed:', e)
+              }
             }
           } else if (response.status === 401) {
             setState({ ...initialState, view: 'login' })
@@ -270,7 +287,8 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                   
                   // 1. Optimistic UI update
                   setState(prev => ({ ...prev, enableEnglish: newVal }));
-                  try { localStorage.setItem('oc_enableEnglish', JSON.stringify(newVal)); } catch {}
+                  // 广播事件让 Header 即刻响应显示/隐藏
+                  window.dispatchEvent(new CustomEvent('oc_lang_toggled', { detail: { isEnabled: newVal } }));
                   
                   try {
                     // 2. Fetch current file SHA
@@ -297,12 +315,12 @@ import AdminLayout from '../../components/admin/AdminLayout.astro'
                     }
                     
                     // console.log('Successfully toggled English mode to:', newVal);
-                  } catch(e) { 
-                    console.error('Toggle failed:', e); 
+                  } catch(e) {
+                    console.error('Toggle failed:', e);
                     alert('切换失败: ' + e.message + '。状态已恢复，请刷新页面重试。');
                     // 4. Revert state on failure
                     setState(prev => ({ ...prev, enableEnglish: oldVal }));
-                    try { localStorage.setItem('oc_enableEnglish', JSON.stringify(oldVal)); } catch {}
+                    window.dispatchEvent(new CustomEvent('oc_lang_toggled', { detail: { isEnabled: oldVal } }));
                   }
                 },
                 style: {

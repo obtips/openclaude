@@ -5,123 +5,161 @@ interface Props {
 
 const { lang = 'zh' } = Astro.props
 
-// 是否为开发环境
-const isDev = import.meta.env.DEV
-
 const nav = {
   zh: {
     home: '首页',
     tutorial: '教程',
     blog: '博客',
     about: '关于',
-    admin: '管理后台',
   },
   en: {
     home: 'Home',
     tutorial: 'Tutorials',
     blog: 'Blog',
     about: 'About',
-    admin: 'Admin',
   }
 }
 
 const t = nav[lang as keyof typeof nav]
 const currentPath = Astro.url.pathname
 const langPrefix = lang === 'en' ? '/en' : ''
-
-// 移除当前语言前缀以获取基础路径
 const basePath = currentPath.replace(/^\/en/, '')
-// 计算切换语言后的路径
 const switchPath = lang === 'zh' ? `/en${basePath || '/'}` : (basePath || '/')
 ---
 
-<header class="sticky top-0 z-50 bg-claude-cream/80 backdrop-blur-md border-b border-claude-border">
+<header class="sticky top-0 z-50 bg-claude-cream/90 backdrop-blur-sm border-b border-claude-border">
   <div class="max-w-6xl mx-auto px-4">
     <div class="flex items-center justify-between h-16">
       <!-- Logo -->
       <a href={lang === 'en' ? '/en' : '/'} class="flex items-center gap-2 hover:opacity-70 transition-opacity">
-        <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect width="32" height="32" rx="8" fill="#D4A574"/>
           <path d="M20 8V19" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
           <circle cx="15" cy="21" r="3.5" stroke="white" stroke-width="2" fill="none"/>
           <path d="M20 8L24 7V12L20 13" stroke="white" stroke-width="2" stroke-linejoin="round" fill="white"/>
         </svg>
-        <span class="font-semibold text-xl">OpenClaude</span>
+        <span class="font-semibold text-lg tracking-tight">OpenClaude</span>
       </a>
 
       <!-- 导航 -->
-      <nav class="hidden md:flex items-center gap-6">
-        <a href={lang === 'en' ? '/en' : '/'} class="text-claude-text-light hover:text-claude-text transition-colors">
+      <nav class="hidden md:flex items-center gap-8">
+        <a href={lang === 'en' ? '/en' : '/'} class="text-claude-text-light hover:text-claude-text transition-colors text-sm">
           {t.home}
         </a>
-        <a href={`${langPrefix}/tutorial/`} class="text-claude-text-light hover:text-claude-text transition-colors">
+        <a href={`${langPrefix}/tutorial/`} class="text-claude-text-light hover:text-claude-text transition-colors text-sm">
           {t.tutorial}
         </a>
-        <a href={`${langPrefix}/blog/`} class="text-claude-text-light hover:text-claude-text transition-colors">
+        <a href={`${langPrefix}/blog/`} class="text-claude-text-light hover:text-claude-text transition-colors text-sm">
           {t.blog}
         </a>
-        <a href={`${langPrefix}/about`} class="text-claude-text-light hover:text-claude-text transition-colors">
+        <a href={`${langPrefix}/about`} class="text-claude-text-light hover:text-claude-text transition-colors text-sm">
           {t.about}
         </a>
-        {isDev && (
-          <a href="/admin/" class="text-claude-accent hover:text-claude-accent/80 transition-colors font-medium">
-            {t.admin}
-          </a>
-        )}
       </nav>
 
-      <!-- 语言切换（初始隐藏，由客户端脚本控制显示） -->
+      <!-- 移动端控件 -->
+      <div class="flex items-center gap-2 md:hidden">
+        <a
+          id="lang-switch-mobile"
+          href={switchPath}
+          class="!hidden flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-claude-border transition-colors text-sm"
+          title={lang === 'zh' ? 'Switch to English' : '切换到中文'}
+          style="display: none;"
+        >
+          {lang === 'zh' ? 'EN' : '中'}
+        </a>
+        <button
+          id="mobile-menu-btn"
+          class="flex items-center justify-center w-9 h-9 rounded-lg bg-white border border-claude-border transition-colors"
+          aria-label="Toggle menu"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path id="menu-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- 桌面端语言切换 -->
       <a
-        id="lang-switch"
+        id="lang-switch-desktop"
         href={switchPath}
-        class="hidden items-center gap-1 px-3 py-1.5 rounded-lg bg-white border border-claude-border hover:bg-claude-warm transition-colors text-sm"
+        class="!hidden hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-claude-border transition-all text-sm"
         title={lang === 'zh' ? 'Switch to English' : '切换到中文'}
         style="display: none;"
       >
-        <span>🌐</span>
-        <span>{lang === 'zh' ? 'EN' : '中文'}</span>
+        {lang === 'zh' ? 'EN' : '中文'}
       </a>
     </div>
+  </div>
+
+  <!-- 移动端菜单 -->
+  <div id="mobile-menu" class="hidden md:hidden border-t border-claude-border bg-claude-cream/95 backdrop-blur-sm">
+    <nav class="flex flex-col py-4 px-4 gap-2">
+      <a href={lang === 'en' ? '/en' : '/'} class="text-claude-text-light hover:text-claude-text transition-colors block py-2">
+        {t.home}
+      </a>
+      <a href={`${langPrefix}/tutorial/`} class="text-claude-text-light hover:text-claude-text transition-colors block py-2">
+        {t.tutorial}
+      </a>
+      <a href={`${langPrefix}/blog/`} class="text-claude-text-light hover:text-claude-text transition-colors block py-2">
+        {t.blog}
+      </a>
+      <a href={`${langPrefix}/about`} class="text-claude-text-light hover:text-claude-text transition-colors block py-2">
+        {t.about}
+      </a>
+    </nav>
   </div>
 </header>
 
 <script is:inline>
   document.addEventListener('DOMContentLoaded', () => {
-    const el = document.getElementById('lang-switch');
-    if (!el) return;
+    const elDesktop = document.getElementById('lang-switch-desktop');
+    const elMobile = document.getElementById('lang-switch-mobile');
+
+    const mobileBtn = document.getElementById('mobile-menu-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const menuIconPath = document.getElementById('menu-icon-path');
+    let isMenuOpen = false;
+
+    if (mobileBtn && mobileMenu && menuIconPath) {
+      mobileBtn.addEventListener('click', () => {
+        isMenuOpen = !isMenuOpen;
+        if (isMenuOpen) {
+          mobileMenu.classList.remove('hidden');
+          menuIconPath.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+        } else {
+          mobileMenu.classList.add('hidden');
+          menuIconPath.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+        }
+      });
+    }
 
     const applyState = (isEnabled) => {
-      if (isEnabled) {
-        el.style.setProperty('display', 'flex', 'important');
-        el.classList.remove('hidden');
-        el.classList.add('flex');
-      } else {
-        el.style.setProperty('display', 'none', 'important');
-        el.classList.add('hidden');
-        el.classList.remove('flex');
-      }
+      [elDesktop, elMobile].forEach(el => {
+        if (!el) return;
+        if (isEnabled) {
+          el.classList.remove('!hidden');
+          el.style.display = '';
+        } else {
+          el.classList.add('!hidden');
+        }
+      });
     };
 
-    // 1. Initial render from localStorage
-    let currentVal = true; // default
-    try {
-      const cached = localStorage.getItem('oc_enableEnglish');
-      if (cached !== null) {
-        currentVal = cached === 'true';
-      }
-    } catch (e) {}
-    
-    // Apply immediate cached state
-    applyState(currentVal);
+    applyState(false);
 
-    // 2. Background sync with API
+    window.addEventListener('oc_lang_toggled', (e) => {
+       applyState(e.detail.isEnabled);
+    });
+
     fetch('/api/posts/settings?t=' + Date.now(), { cache: 'no-store' })
       .then(res => res.ok ? res.json() : { enableEnglish: true })
       .then(data => {
         const isEnabled = data.enableEnglish !== false;
-        try { localStorage.setItem('oc_enableEnglish', isEnabled ? 'true' : 'false'); } catch (e) {}
         applyState(isEnabled);
       })
-      .catch(() => { /* silent */ });
+      .catch(() => {
+        applyState(false);
+      });
   });
 </script>
